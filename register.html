@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register — AppointEase</title>
+    <meta name="description" content="Create your free AppointEase account and start booking appointments today." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .auth-wrapper {
+            flex: 1;
+            margin-top: var(--nav-h);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: calc(100vh - var(--nav-h));
+        }
+
+        .auth-panel {
+            background: linear-gradient(145deg, rgba(56, 189, 248, 0.1) 0%, rgba(249, 115, 22, 0.08) 100%);
+            border-right: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 5%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-panel::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 70%);
+            bottom: -100px;
+            right: -100px;
+        }
+
+        .auth-panel-inner {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .auth-panel .big-icon {
+            font-size: 4.5rem;
+            display: block;
+            margin-bottom: 1.5rem;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .auth-panel h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--highlight));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-panel p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 300px;
+        }
+
+        .plan-cards {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .plan-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.83rem;
+        }
+
+        .plan-card .plan-icon {
+            font-size: 1.3rem;
+        }
+
+        .plan-card .plan-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-card .plan-sub {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .auth-form-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 50px 5%;
+            overflow-y: auto;
+        }
+
+        .auth-form-box {
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .logo-sm {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+
+        .logo-sm .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--highlight));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: var(--card-border);
+            margin-top: 6px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            width: 0;
+            transition: width 0.4s, background 0.4s;
+        }
+
+        .terms-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .terms-text a {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .auth-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-panel {
+                display: none;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <div class="brand-icon">📅</div>
+            Appoint<span>Ease</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="categories.html">Services</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+
+    <div class="auth-wrapper">
+        <!-- LEFT PANEL -->
+        <div class="auth-panel">
+            <div class="auth-panel-inner">
+                <span class="big-icon">🚀</span>
+                <h2>Join AppointEase</h2>
+                <p>Create your free account and start booking appointments with the best providers near you.</p>
+                <div class="plan-cards">
+                    <div class="plan-card">
+                        <span class="plan-icon">❤️‍🩹</span>
+                        <div>
+                            <div class="plan-title">Healthcare</div>
+                            <div class="plan-sub">Doctors, dentists & therapists</div>
+                        </div>
+                    </div>
+                    <div class="plan-card">
+                        <span class="plan-icon">💅</span>
+                        <div>
+                            <div class="plan-title">Beauty & Wellness</div>
+                            <div class="plan-sub">Salons, spas & skincare</div>
+                        </div>
+                    </div>
+                    <div class="plan-card">
+                        <span class="plan-icon">📚</span>
+                        <div>
+                            <div class="plan-title">Education</div>
+                            <div class="plan-sub">Tutors & skill coaches</div>
+                        </div>
+                    </div>
+                    <div class="plan-card">
+                        <span class="plan-icon">💼</span>
+                        <div>
+                            <div class="plan-title">Consulting</div>
+                            <div class="plan-sub">Legal, finance & business</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: FORM -->
+        <div class="auth-form-col">
+            <div class="auth-form-box">
+                <div class="logo-sm">
+                    <div class="brand-icon">📅</div>
+                    AppointEase
+                </div>
+                <h1 style="font-size:1.75rem; font-weight:700; margin-bottom:0.4rem">Create Account</h1>
+                <p class="subtitle" style="color:var(--text-muted); font-size:0.875rem; margin-bottom:1.75rem">
+                    Already have an account? <a href="login.html" style="color:var(--accent)">Sign in</a>
+                </p>
+
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <div class="input-group">
+                                <span class="input-icon">👤</span>
+                                <input type="text" id="firstName" name="firstName" class="form-control"
+                                    placeholder="Riya" required />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <div class="input-group">
+                                <span class="input-icon">👤</span>
+                                <input type="text" id="lastName" name="lastName" class="form-control"
+                                    placeholder="Kapoor" required />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regEmail">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-icon">📧</span>
+                            <input type="email" id="regEmail" name="email" class="form-control"
+                                placeholder="you@example.com" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <div class="input-group">
+                            <span class="input-icon">📱</span>
+                            <input type="tel" id="phone" name="phone" class="form-control" placeholder="+91 98765 43210"
+                                required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regPassword">Password</label>
+                        <div class="input-group">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="regPassword" name="password" class="form-control"
+                                placeholder="Min. 8 characters" required oninput="checkStrength(this.value)" />
+                            <span class="toggle-pw">👁</span>
+                        </div>
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strengthFill"></div>
+                        </div>
+                        <div id="strengthLabel" style="font-size:0.75rem; margin-top:4px; color:var(--text-muted)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-control"
+                                placeholder="Repeat password" required />
+                            <span class="toggle-pw">👁</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:1.5rem">
+                        <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer">
+                            <input type="checkbox" id="terms" required
+                                style="accent-color:var(--accent); margin-top:3px" />
+                            <span class="terms-text">I agree to the <a href="#">Terms of Service</a> and <a
+                                    href="#">Privacy Policy</a>. I consent to receiving appointment-related
+                                communications.</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="registerBtn">
+                        Create Free Account
+                    </button>
+                </form>
+
+                <div style="text-align:center; margin-top:1.5rem; font-size:0.85rem; color:var(--text-muted)">
+                    Already have an account? <a href="login.html" style="color:var(--accent); font-weight:600">Sign
+                        In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        function checkStrength(val) {
+            const fill = document.getElementById('strengthFill');
+            const label = document.getElementById('strengthLabel');
+            let score = 0;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val)) score++;
+            if (/[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+            const levels = [
+                { pct: '25%', color: '#ef4444', text: 'Weak' },
+                { pct: '50%', color: '#f59e0b', text: 'Fair' },
+                { pct: '75%', color: '#38bdf8', text: 'Good' },
+                { pct: '100%', color: '#22c55e', text: 'Strong' }
+            ];
+            const lvl = levels[score - 1] || { pct: '0%', color: 'transparent', text: '' };
+            fill.style.width = lvl.pct;
+            fill.style.background = lvl.color;
+            label.textContent = val.length ? lvl.text : '';
+            label.style.color = lvl.color;
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const pw = document.getElementById('regPassword').value;
+            const cpw = document.getElementById('confirmPassword').value;
+            if (pw !== cpw) { showToast('Passwords do not match!', 'error'); return; }
+            const btn = document.getElementById('registerBtn');
+            btn.innerHTML = '<span class="spinner"></span> Creating account...';
+            btn.disabled = true;
+            setTimeout(() => {
+                showToast('Account created successfully!', 'success');
+                setTimeout(() => window.location.href = 'categories.html', 1000);
+                btn.innerHTML = 'Create Free Account';
+                btn.disabled = false;
+            }, 1800);
+        }
+    </script>
+</body>
+
+</html>

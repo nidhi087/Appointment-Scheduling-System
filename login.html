@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login — AppointEase</title>
+    <meta name="description" content="Sign in to your AppointEase account to manage appointments." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .auth-wrapper {
+            flex: 1;
+            margin-top: var(--nav-h);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: calc(100vh - var(--nav-h));
+        }
+
+        /* Left panel — decorative */
+        .auth-panel {
+            background: linear-gradient(145deg, rgba(249, 115, 22, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%);
+            border-right: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 5%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .auth-panel::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(249, 115, 22, 0.15), transparent 70%);
+            top: -100px;
+            left: -100px;
+        }
+
+        .auth-panel::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.1), transparent 70%);
+            bottom: -60px;
+            right: -60px;
+        }
+
+        .auth-panel-inner {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .auth-panel .big-icon {
+            font-size: 4.5rem;
+            display: block;
+            margin-bottom: 1.5rem;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .auth-panel h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-panel p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 320px;
+        }
+
+        .auth-features {
+            margin-top: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-align: left;
+        }
+
+        .auth-feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-feature-item .check {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+
+        /* Right panel — form */
+        .auth-form-col {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 5%;
+        }
+
+        .auth-form-box {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-form-box .logo-sm {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .auth-form-box .logo-sm .brand-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--highlight));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .auth-form-box h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+        }
+
+        .auth-form-box .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            margin-bottom: 2rem;
+        }
+
+        .auth-form-box .subtitle a {
+            color: var(--accent);
+        }
+
+        .auth-form-box .subtitle a:hover {
+            text-decoration: underline;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin: 1.5rem 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--card-border);
+        }
+
+        .social-login {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            transition: all var(--transition);
+        }
+
+        .social-btn:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .forgot-link {
+            float: right;
+            font-size: 0.8rem;
+            color: var(--accent);
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .auth-toggle a {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .auth-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-panel {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <div class="brand-icon">📅</div>
+            Appoint<span>Ease</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="categories.html">Services</a></li>
+            <li><a href="providers.html">Providers</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="register.html" class="btn btn-primary btn-sm">Create Account</a>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+
+    <!-- AUTH WRAPPER -->
+    <div class="auth-wrapper">
+
+        <!-- LEFT: Decorative Panel -->
+        <div class="auth-panel">
+            <div class="auth-panel-inner">
+                <span class="big-icon">🔐</span>
+                <h2>Welcome Back!</h2>
+                <p>Sign in and take charge of your appointments — healthcare, beauty, education, consulting all in one
+                    place.</p>
+                <div class="auth-features">
+                    <div class="auth-feature-item"><span class="check">✓</span>Manage all appointments in one dashboard
+                    </div>
+                    <div class="auth-feature-item"><span class="check">✓</span>Real-time booking & instant confirmations
+                    </div>
+                    <div class="auth-feature-item"><span class="check">✓</span>Track history and leave feedback</div>
+                    <div class="auth-feature-item"><span class="check">✓</span>Cancel or reschedule with ease</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Form -->
+        <div class="auth-form-col">
+            <div class="auth-form-box">
+                <div class="logo-sm">
+                    <div class="brand-icon">📅</div>
+                    AppointEase
+                </div>
+
+                <h1>Sign In</h1>
+                <p class="subtitle">New here? <a href="register.html">Create a free account</a></p>
+
+                <!-- Social Login -->
+                <div class="social-login">
+                    <button class="social-btn" onclick="showToast('Google login coming soon', 'info')">🌐
+                        Google</button>
+                    <button class="social-btn" onclick="showToast('Facebook login coming soon', 'info')">📘
+                        Facebook</button>
+                </div>
+
+                <div class="divider">or sign in with email</div>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-icon">📧</span>
+                            <input type="email" id="email" name="email" class="form-control"
+                                placeholder="you@example.com" required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password <a href="#" class="forgot-link">Forgot password?</a></label>
+                        <div class="input-group">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="password" name="password" class="form-control"
+                                placeholder="Enter your password" required />
+                            <span class="toggle-pw">👁</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5rem;">
+                        <input type="checkbox" id="remember" style="accent-color:var(--accent)" />
+                        <label for="remember"
+                            style="font-size:0.85rem; color:var(--text-muted); cursor:pointer">Remember me for 30
+                            days</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="auth-toggle">
+                    Don't have an account? <a href="register.html">Register for free</a>
+                </div>
+
+                <div
+                    style="margin-top:2rem; padding-top:1rem; border-top:1px solid var(--card-border); text-align:center; font-size:0.78rem; color:var(--text-muted)">
+                    👨‍💼 Are you an admin? <a href="admin_dashboard.html" style="color:var(--accent)">Go to Admin
+                        Panel</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            btn.innerHTML = '<span class="spinner"></span> Signing in...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                const email = document.getElementById('email').value;
+                if (email === 'admin@appointease.com') {
+                    showToast('Admin login successful!', 'success');
+                    setTimeout(() => window.location.href = 'admin_dashboard.html', 1000);
+                } else {
+                    showToast('Login successful! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = 'categories.html', 1000);
+                }
+                btn.innerHTML = 'Sign In';
+                btn.disabled = false;
+            }, 1500);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Providers — AppointEase</title>
+    <meta name="description" content="Browse and book appointments with top-rated service providers." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .providers-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            padding: 40px 5%;
+        }
+
+        /* Filters Sidebar */
+        .filters-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            height: fit-content;
+            position: sticky;
+            top: calc(var(--nav-h) + 20px);
+        }
+
+        .filters-panel h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group h4 {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .filter-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color var(--transition);
+        }
+
+        .filter-option:hover,
+        .filter-option.active {
+            color: var(--text-primary);
+        }
+
+        .filter-option input {
+            accent-color: var(--accent);
+        }
+
+        .rating-filter {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .rating-chip {
+            padding: 5px 12px;
+            border-radius: 50px;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .rating-chip.active,
+        .rating-chip:hover {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Provider Cards */
+        .providers-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .providers-header h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .providers-header .result-count {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .search-bar {
+            position: relative;
+            flex: 1;
+            max-width: 320px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 14px 10px 40px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--card-border);
+            border-radius: 50px;
+            color: var(--text-primary);
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color var(--transition);
+        }
+
+        .search-bar input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-bar .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.4rem;
+        }
+
+        .provider-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            transition: all var(--transition);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+            border-color: rgba(249, 115, 22, 0.4);
+        }
+
+        .provider-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+            border: 3px solid var(--card-border);
+        }
+
+        .provider-name {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .provider-spec {
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .provider-cat {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .provider-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .provider-meta .rating {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .provider-meta .reviews {
+            color: var(--text-muted);
+        }
+
+        .provider-meta .exp {
+            color: var(--highlight);
+        }
+
+        .provider-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .provider-tag {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            padding: 2px 8px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .provider-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 1rem;
+            border-top: 1px solid var(--card-border);
+            margin-top: auto;
+        }
+
+        .provider-price {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .provider-price span {
+            color: var(--success);
+            font-size: 1rem;
+        }
+
+        .avail-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            display: inline-block;
+        }
+
+        @media (max-width: 1024px) {
+            .providers-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .filters-panel {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <div class="brand-icon">📅</div>Appoint<span>Ease</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="categories.html">Services</a></li>
+            <li><a href="providers.html" class="active">Providers</a></li>
+            <li><a href="history.html">My Bookings</a></li>
+            <li><a href="feedback.html">Feedback</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+            <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+
+    <div class="page-hero">
+        <h1>Find Your Provider</h1>
+        <p>Browse verified professionals and book your preferred time slot instantly.</p>
+    </div>
+
+    <div class="providers-layout">
+        <!-- FILTERS -->
+        <aside class="filters-panel">
+            <h3>🔍 Filter Providers</h3>
+
+            <div class="filter-group">
+                <h4>Category</h4>
+                <div class="filter-options">
+                    <label class="filter-option"><input type="radio" name="cat" value="all" checked /> All
+                        Categories</label>
+                    <label class="filter-option"><input type="radio" name="cat" value="healthcare" /> ❤️‍🩹
+                        Healthcare</label>
+                    <label class="filter-option"><input type="radio" name="cat" value="beauty" /> 💅 Beauty</label>
+                    <label class="filter-option"><input type="radio" name="cat" value="education" /> 📚
+                        Education</label>
+                    <label class="filter-option"><input type="radio" name="cat" value="consulting" /> 💼
+                        Consulting</label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>Min Rating</h4>
+                <div class="rating-filter">
+                    <span class="rating-chip active">All</span>
+                    <span class="rating-chip">⭐ 3+</span>
+                    <span class="rating-chip">⭐ 4+</span>
+                    <span class="rating-chip">⭐ 4.5+</span>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>Availability</h4>
+                <div class="filter-options">
+                    <label class="filter-option"><input type="checkbox" checked /> Available Today</label>
+                    <label class="filter-option"><input type="checkbox" /> Available This Week</label>
+                    <label class="filter-option"><input type="checkbox" /> Online Consultations</label>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <h4>Experience</h4>
+                <div class="filter-options">
+                    <label class="filter-option"><input type="radio" name="exp" value="all" checked /> Any</label>
+                    <label class="filter-option"><input type="radio" name="exp" value="1" /> 1+ years</label>
+                    <label class="filter-option"><input type="radio" name="exp" value="3" /> 3+ years</label>
+                    <label class="filter-option"><input type="radio" name="exp" value="5" /> 5+ years</label>
+                </div>
+            </div>
+
+            <button class="btn btn-outline btn-sm btn-block" onclick="showToast('Filters applied!','success')">Apply
+                Filters</button>
+        </aside>
+
+        <!-- PROVIDER LIST -->
+        <div>
+            <div class="providers-header">
+                <div>
+                    <h2>All Providers</h2>
+                    <div class="result-count">No providers loaded yet</div>
+                </div>
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="providerSearch" placeholder="Search by name or specialty..."
+                        oninput="filterProviders()" />
+                </div>
+                <select class="form-control" style="width:160px; padding:10px 14px"
+                    onchange="showToast('Sorted!','info')">
+                    <option>Sort: Top Rated</option>
+                    <option>Sort: Most Reviews</option>
+                    <option>Sort: Newest</option>
+                    <option>Sort: Price Low-High</option>
+                </select>
+            </div>
+
+            <!-- Provider cards will be rendered here by the API -->
+            <div class="providers-grid" id="providersGrid">
+                <div style="grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--text-muted)">
+                    <div style="font-size:3rem; margin-bottom:1rem">👨‍💼</div>
+                    <h3 style="font-size:1rem; margin-bottom:0.4rem; color:var(--text-primary)">No Providers Yet</h3>
+                    <p style="font-size:0.85rem">Provider listings will appear here once connected to the backend.</p>
+                </div>
+            </div>
+
+            <div class="pagination" style="margin-top:2.5rem">
+                <button class="active">1</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <div class="nav-brand" style="margin-bottom:0.75rem">
+                    <div class="brand-icon">📅</div>Appoint<span style="color:var(--accent)">Ease</span>
+                </div>
+                <p>Smart scheduling for everyone.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Categories</h4>
+                <ul>
+                    <li><a href="providers.html?cat=healthcare">Healthcare</a></li>
+                    <li><a href="providers.html?cat=beauty">Beauty</a></li>
+                    <li><a href="providers.html?cat=education">Education</a></li>
+                    <li><a href="providers.html?cat=consulting">Consulting</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Account</h4>
+                <ul>
+                    <li><a href="register.html">Register</a></li>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="history.html">My Bookings</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>© 2026 AppointEase. All rights reserved.</span></div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script>
+        document.querySelectorAll('.rating-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.rating-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                showToast('Filter applied: ' + chip.textContent, 'info');
+            });
+        });
+    </script>
+</body>
+
+</html>

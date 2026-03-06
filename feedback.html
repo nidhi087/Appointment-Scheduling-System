@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feedback — AppointEase</title>
+    <meta name="description" content="Rate your experience and leave feedback for your provider." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .feedback-wrapper {
+            padding: 50px 5%;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .feedback-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .provider-banner {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .provider-banner .av {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--highlight));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .rating-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .rating-section h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.05rem;
+        }
+
+        .rating-section p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .big-stars {
+            display: inline-flex;
+            gap: 8px;
+            margin-bottom: 0.75rem;
+        }
+
+        .big-stars .star {
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: transform var(--transition), filter var(--transition);
+            filter: grayscale(1);
+            user-select: none;
+        }
+
+        .big-stars .star.lit {
+            filter: grayscale(0);
+        }
+
+        .big-stars .star:hover {
+            transform: scale(1.2);
+        }
+
+        .rating-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+            min-height: 1.4rem;
+        }
+
+        .aspect-ratings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .aspect-item {
+            background: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+        }
+
+        .aspect-item label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .mini-stars {
+            display: flex;
+            gap: 4px;
+        }
+
+        .mini-stars .s {
+            font-size: 1.2rem;
+            cursor: pointer;
+            filter: grayscale(1);
+            transition: filter var(--transition), transform var(--transition);
+        }
+
+        .mini-stars .s.lit {
+            filter: grayscale(0);
+        }
+
+        .mini-stars .s:hover {
+            transform: scale(1.15);
+        }
+
+        .tag-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .tag-opt {
+            padding: 6px 14px;
+            border-radius: 50px;
+            background: var(--input-bg);
+            border: 1.5px solid var(--card-border);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            user-select: none;
+        }
+
+        .tag-opt.active {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .reviews-section {
+            padding: 50px 5%;
+            max-width: 700px;
+            margin: 0 auto;
+            padding-top: 0;
+        }
+
+        .review-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.3rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 12px;
+        }
+
+        .review-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .review-name {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .review-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .review-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <div class="brand-icon">📅</div>Appoint<span>Ease</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="categories.html">Services</a></li>
+            <li><a href="providers.html">Providers</a></li>
+            <li><a href="history.html">My Bookings</a></li>
+            <li><a href="feedback.html" class="active">Feedback</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+            <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+
+    <div class="page-hero">
+        <h1>Share Your Experience</h1>
+        <p>Help others choose the right provider by sharing your honest feedback.</p>
+    </div>
+
+    <div class="feedback-wrapper">
+
+        <!-- Provider Info -->
+        <div class="provider-banner">
+            <div class="av">👩‍⚕️</div>
+            <div>
+                <div style="font-weight:700">Dr. Priya Sharma</div>
+                <div style="font-size:0.82rem; color:var(--accent)">Cardiologist</div>
+                <div style="font-size:0.78rem; color:var(--text-muted)">Appointment on March 10, 2026 · 10:00 AM</div>
+            </div>
+            <span class="badge badge-success" style="margin-left:auto">✅ Completed</span>
+        </div>
+
+        <div class="feedback-card">
+
+            <!-- Overall Rating -->
+            <div class="rating-section">
+                <h3>Overall Rating</h3>
+                <p>How would you rate your overall experience?</p>
+                <div class="big-stars" id="bigStars">
+                    <span class="star" data-v="1">⭐</span>
+                    <span class="star" data-v="2">⭐</span>
+                    <span class="star" data-v="3">⭐</span>
+                    <span class="star" data-v="4">⭐</span>
+                    <span class="star" data-v="5">⭐</span>
+                </div>
+                <div class="rating-label" id="ratingLabel">Tap to rate</div>
+            </div>
+
+            <!-- Aspect Ratings -->
+            <div class="aspect-ratings">
+                <div class="aspect-item">
+                    <label>👨‍⚕️ Doctor's Knowledge</label>
+                    <div class="mini-stars" data-aspect="knowledge"><span class="s">⭐</span><span
+                            class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span>
+                    </div>
+                </div>
+                <div class="aspect-item">
+                    <label>🕒 Punctuality</label>
+                    <div class="mini-stars" data-aspect="punctuality"><span class="s">⭐</span><span
+                            class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span>
+                    </div>
+                </div>
+                <div class="aspect-item">
+                    <label>🏥 Clinic Cleanliness</label>
+                    <div class="mini-stars" data-aspect="cleanliness"><span class="s">⭐</span><span
+                            class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span>
+                    </div>
+                </div>
+                <div class="aspect-item">
+                    <label>💬 Communication</label>
+                    <div class="mini-stars" data-aspect="communication"><span class="s">⭐</span><span
+                            class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span><span class="s">⭐</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tag Options -->
+            <div class="form-group">
+                <label>Quick Tags (select all that apply)</label>
+                <div class="tag-options">
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">👍 Highly Recommend</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">⚡ Very Efficient</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">😊 Very Friendly</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">📋 Thorough Examination</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">⏰ On Time</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">💡 Good Explanation</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">💰 Value for Money</span>
+                    <span class="tag-opt" onclick="this.classList.toggle('active')">🔄 Would Return</span>
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="form-group">
+                <label for="comment">Detailed Review</label>
+                <textarea id="comment" class="form-control" rows="4"
+                    placeholder="Share your experience in detail. What went well? What could be improved? Your honest feedback helps others."></textarea>
+            </div>
+
+            <!-- Image Upload -->
+            <div class="form-group">
+                <label>Add Photos (optional)</label>
+                <label
+                    style="display:block; border:2px dashed var(--card-border); border-radius:var(--radius-sm); padding:1.5rem; text-align:center; cursor:pointer; transition:border-color var(--transition)"
+                    onmouseover="this.style.borderColor='var(--accent)'"
+                    onmouseout="this.style.borderColor='var(--card-border)'">
+                    <div style="font-size:1.5rem; margin-bottom:4px">📷</div>
+                    <div style="font-size:0.8rem; color:var(--text-muted)">Click to upload (max 3 photos)</div>
+                    <input type="file" multiple accept="image/*" style="display:none" />
+                </label>
+            </div>
+
+            <!-- Anonymous -->
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:1.5rem">
+                <input type="checkbox" id="anonymous" style="accent-color:var(--accent)" />
+                <label for="anonymous" style="font-size:0.85rem; cursor:pointer">Post anonymously</label>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" onclick="submitFeedback()">
+                Submit Feedback ⭐
+            </button>
+        </div>
+    </div>
+
+    <!-- Past Reviews -->
+    <div class="reviews-section">
+        <h2 style="font-size:1.2rem; font-weight:700; margin-bottom:1.25rem">🗣️ Recent Reviews for Dr. Priya Sharma
+        </h2>
+
+        <div class="review-item">
+            <div class="review-avatar" style="background:linear-gradient(135deg,var(--accent),var(--accent-light))">AK
+            </div>
+            <div>
+                <div class="flex-between"><span class="review-name">Ankit Kumar</span><span
+                        style="color:var(--warning)">⭐⭐⭐⭐⭐</span></div>
+                <div class="review-date">Feb 28, 2026</div>
+                <p class="review-text">Excellent doctor! Very thorough and explained everything clearly. Highly
+                    recommend for any cardiac concerns.</p>
+            </div>
+        </div>
+
+        <div class="review-item">
+            <div class="review-avatar" style="background:linear-gradient(135deg,#38bdf8,#818cf8)">PS</div>
+            <div>
+                <div class="flex-between"><span class="review-name">Pooja Sinha</span><span
+                        style="color:var(--warning)">⭐⭐⭐⭐⭐</span></div>
+                <div class="review-date">Feb 15, 2026</div>
+                <p class="review-text">Dr. Sharma is amazing! The appointment was right on time and she was very patient
+                    with all my questions.</p>
+            </div>
+        </div>
+
+        <div class="review-item">
+            <div class="review-avatar" style="background:linear-gradient(135deg,#22c55e,#4ade80)">MR</div>
+            <div>
+                <div class="flex-between"><span class="review-name">Manish Raj</span><span
+                        style="color:var(--warning)">⭐⭐⭐⭐</span></div>
+                <div class="review-date">Jan 30, 2026</div>
+                <p class="review-text">Great experience overall. Waiting time was minimal and the clinic was very clean.
+                    Will visit again.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <div class="nav-brand" style="margin-bottom:0.75rem">
+                    <div class="brand-icon">📅</div>Appoint<span style="color:var(--accent)">Ease</span>
+                </div>
+                <p>Smart scheduling for everyone.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="categories.html">Services</a></li>
+                    <li><a href="providers.html">Providers</a></li>
+                    <li><a href="history.html">Bookings</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Account</h4>
+                <ul>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="register.html">Register</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom"><span>© 2026 AppointEase. All rights reserved.</span></div>
+    </footer>
+
+    <script src="js/script.js"></script>
+    <script>
+        const labels = ['', 'Poor 😞', 'Fair 😐', 'Good 😊', 'Very Good 😄', 'Excellent! 🤩'];
+        let currentRating = 0;
+        const stars = document.querySelectorAll('#bigStars .star');
+        const ratingLabel = document.getElementById('ratingLabel');
+
+        stars.forEach(star => {
+            star.addEventListener('mouseenter', () => {
+                const v = +star.dataset.v;
+                stars.forEach(s => s.classList.toggle('lit', +s.dataset.v <= v));
+                ratingLabel.textContent = labels[v];
+            });
+            star.addEventListener('mouseleave', () => {
+                stars.forEach(s => s.classList.toggle('lit', +s.dataset.v <= currentRating));
+                ratingLabel.textContent = currentRating ? labels[currentRating] : 'Tap to rate';
+            });
+            star.addEventListener('click', () => {
+                currentRating = +star.dataset.v;
+                ratingLabel.textContent = labels[currentRating];
+            });
+        });
+
+        // Mini stars
+        document.querySelectorAll('.mini-stars').forEach(group => {
+            const strs = group.querySelectorAll('.s');
+            let sel = 0;
+            strs.forEach((s, i) => {
+                s.addEventListener('mouseenter', () => strs.forEach((ss, j) => ss.classList.toggle('lit', j <= i)));
+                s.addEventListener('mouseleave', () => strs.forEach((ss, j) => ss.classList.toggle('lit', j < sel)));
+                s.addEventListener('click', () => { sel = i + 1; });
+            });
+        });
+
+        function submitFeedback() {
+            if (!currentRating) { showToast('Please select an overall rating!', 'error'); return; }
+            const comment = document.getElementById('comment').value.trim();
+            if (!comment) { showToast('Please write a review comment!', 'error'); return; }
+            showToast('Thank you! Your feedback has been submitted ⭐', 'success');
+            setTimeout(() => window.location.href = 'history.html', 1800);
+        }
+    </script>
+</body>
+
+</html>

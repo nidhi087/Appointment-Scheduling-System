@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Book Appointment — AppointEase</title>
+    <meta name="description" content="Select a date and time slot to book your appointment." />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+        .booking-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 2rem;
+            padding: 40px 5%;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Provider Info Card */
+        .provider-info-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .provider-info-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--highlight));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .provider-info-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .provider-info-spec {
+            color: var(--accent);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .provider-info-meta {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        /* Date Picker Section */
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Calendar Strip */
+        .date-strip {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+
+        .date-strip::-webkit-scrollbar {
+            height: 3px;
+        }
+
+        .date-strip::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 2px;
+        }
+
+        .date-chip {
+            flex-shrink: 0;
+            width: 70px;
+            text-align: center;
+            background: var(--input-bg);
+            border: 1.5px solid var(--card-border);
+            border-radius: var(--radius-sm);
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .date-chip:hover:not(.disabled) {
+            border-color: var(--accent);
+        }
+
+        .date-chip.selected {
+            background: rgba(249, 115, 22, 0.15);
+            border-color: var(--accent);
+        }
+
+        .date-chip .day {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .date-chip .num {
+            font-size: 1.3rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .date-chip .mon {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .date-chip.selected .day,
+        .date-chip.selected .mon {
+            color: var(--accent);
+        }
+
+        .date-chip.today .num::after {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin: 2px auto 0;
+        }
+
+        .date-chip.disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* Slot Legend */
+        .slot-legend {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        .slot-legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        /* Booking Summary Card */
+        .summary-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: sticky;
+            top: calc(var(--nav-h) + 20px);
+            height: fit-content;
+        }
+
+        .summary-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .summary-row .label {
+            color: var(--text-muted);
+        }
+
+        .summary-row .value {
+            font-weight: 600;
+            text-align: right;
+            max-width: 60%;
+        }
+
+        .summary-divider {
+            border: none;
+            border-top: 1px solid var(--card-border);
+            margin: 1rem 0;
+        }
+
+        .summary-total {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+        .summary-total .value {
+            color: var(--accent);
+            font-size: 1.15rem;
+        }
+
+        .booking-notes textarea {
+            width: 100%;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        @media (max-width: 900px) {
+            .booking-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-card {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">
+            <div class="brand-icon">📅</div>Appoint<span>Ease</span>
+        </a>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="categories.html">Services</a></li>
+            <li><a href="providers.html">Providers</a></li>
+            <li><a href="history.html">My Bookings</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+            <a href="register.html" class="btn btn-primary btn-sm">Get Started</a>
+        </div>
+        <div class="hamburger"><span></span><span></span><span></span></div>
+    </nav>
+
+    <div class="page-hero">
+        <h1>Book Your Appointment</h1>
+        <p>Choose a date and available time slot to confirm your booking.</p>
+    </div>
+
+    <div class="booking-layout">
+        <!-- LEFT: Date + Slot Picker -->
+        <div>
+            <!-- Provider Info — loads from API -->
+            <div class="provider-info-card">
+                <div class="provider-info-avatar">👤</div>
+                <div style="flex:1">
+                    <div class="provider-info-name">Select a Provider</div>
+                    <div class="provider-info-spec">Specialization will appear here</div>
+                    <div class="provider-info-meta">Category &nbsp;·&nbsp; Rating &nbsp;·&nbsp; Experience</div>
+                </div>
+                <a href="providers.html" class="btn btn-ghost btn-sm">Choose Provider</a>
+            </div>
+
+            <!-- Date Picker -->
+            <div class="section-card">
+                <h3>📅 Select Date</h3>
+                <div class="date-strip" id="dateStrip"></div>
+            </div>
+
+            <!-- Time Slots -->
+            <div class="section-card">
+                <h3>⏰ Available Slots</h3>
+                <div class="slot-legend">
+                    <span><span class="legend-dot"
+                            style="background:var(--card-border);border:1px solid var(--card-border)"></span>Available</span>
+                    <span><span class="legend-dot"
+                            style="background:rgba(249,115,22,0.2);border:1px solid var(--accent)"></span>Selected</span>
+                    <span><span class="legend-dot"
+                            style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3)"></span>Booked</span>
+                </div>
+
+                <div style="margin-bottom:1rem">
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px">🌅 Morning</p>
+                    <div class="slot-grid" id="morningSlots"></div>
+                </div>
+                <div style="margin-bottom:1rem">
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px">☀️ Afternoon</p>
+                    <div class="slot-grid" id="afternoonSlots"></div>
+                </div>
+                <div>
+                    <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:8px">🌙 Evening</p>
+                    <div class="slot-grid" id="eveningSlots"></div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="section-card booking-notes">
+                <h3>📝 Additional Notes (optional)</h3>
+                <div class="form-group" style="margin-bottom:0">
+                    <textarea id="bookingNotes" class="form-control"
+                        placeholder="Briefly describe your concern or reason for visit..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Booking Summary -->
+        <div class="summary-card">
+            <h3>📋 Booking Summary</h3>
+
+            <div class="summary-row">
+                <span class="label">Provider</span>
+                <span class="value" id="summaryProvider">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Specialization</span>
+                <span class="value" id="summarySpec">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Date</span>
+                <span class="value" id="summaryDate">Not selected</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Time</span>
+                <span class="value" id="summaryTime">Not selected</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Duration</span>
+                <span class="value">—</span>
+            </div>
+            <div class="summary-row">
+                <span class="label">Mode</span>
+                <span class="value">In-Clinic</span>
+            </div>
+
+            <hr class="summary-divider" />
+            <div class="summary-row summary-total">
+                <span class="label">Consultation Fee</span>
+                <span class="value">—</span>
+            </div>
+            <div class="summary-row" style="margin-bottom:0">
+                <span class="label" style="font-size:0.75rem; color:var(--success)">Platform fee waived ✅</span>
+                <span class="value" style="color:var(--success); font-size:0.78rem">FREE</span>
+            </div>
+
+            <hr class="summary-divider" />
+
+            <div class="form-group">
+                <label>Consultation Type</label>
+                <select class="form-control">
+                    <option>In-Clinic</option>
+                    <option>Online Video Call</option>
+                    <option>Home Visit</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" id="confirmBtn" onclick="confirmBooking()"
+                style="margin-top:0.5rem">
+                Confirm Booking
+            </button>
+            <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:10px">
+                🔒 Free cancellation up to 2 hours before
+            </p>
+        </div>
+    </div>
+
+    <!-- Booking Confirmation Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🎉 Booking Confirmed!</h3>
+                <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+            </div>
+            <div class="modal-body" style="text-align:center">
+                <div style="font-size:4rem; margin-bottom:1rem">✅</div>
+                <h3 style="margin-bottom:0.5rem">Appointment Booked!</h3>
+                <p style="color:var(--text-muted); margin-bottom:1.5rem">Your appointment has been confirmed.</p>
+                <div
+                    style="background:var(--input-bg); border-radius:var(--radius-sm); padding:1rem; text-align:left; font-size:0.85rem; line-height:2">
+                    <div>📅 <strong>Date:</strong> <span id="modalDate">—</span></div>
+                    <div>⏰ <strong>Time:</strong> <span id="modalTime">—</span></div>
+                    <div>📍 <strong>Mode:</strong> In-Clinic</div>
+                    <div>💰 <strong>Fee:</strong> —</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="history.html" class="btn btn-primary">View My Bookings</a>
+                <button onclick="closeModal('confirmModal')" class="btn btn-ghost">Book Another</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Build date strip (next 14 days)
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const strip = document.getElementById('dateStrip');
+        const today = new Date();
+        let selectedDate = null;
+
+        for (let i = 0; i < 14; i++) {
+            const d = new Date(today);
+            d.setDate(today.getDate() + i);
+            const chip = document.createElement('div');
+            chip.className = 'date-chip' + (i === 0 ? ' today' : '');
+            chip.innerHTML = `<div class="day">${days[d.getDay()]}</div><div class="num">${d.getDate()}</div><div class="mon">${months[d.getMonth()]}</div>`;
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+                chip.classList.add('selected');
+                selectedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                document.getElementById('summaryDate').textContent = selectedDate;
+                showToast('Date selected: ' + selectedDate, 'info');
+            });
+            strip.appendChild(chip);
+        }
+
+        // Build slots
+        const morning = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
+        const afternoon = ['12:00 PM', '12:30 PM', '01:00 PM', '02:00 PM', '02:30 PM', '03:00 PM'];
+        const evening = ['05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM'];
+        const booked = ['09:30 AM', '12:00 PM', '06:00 PM'];
+
+        function buildSlots(times, containerId) {
+            const container = document.getElementById(containerId);
+            times.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn' + (booked.includes(time) ? ' disabled-slot' : '');
+                btn.textContent = time;
+                btn.dataset.time = time;
+                if (booked.includes(time)) {
+                    btn.disabled = true;
+                    btn.style.cssText = 'opacity:0.4; cursor:not-allowed; text-decoration:line-through; color:var(--danger)';
+                }
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    document.getElementById('summaryTime').textContent = time;
+                });
+                container.appendChild(btn);
+            });
+        }
+
+        buildSlots(morning, 'morningSlots');
+        buildSlots(afternoon, 'afternoonSlots');
+        buildSlots(evening, 'eveningSlots');
+
+        function confirmBooking() {
+            const date = document.getElementById('summaryDate').textContent;
+            const time = document.getElementById('summaryTime').textContent;
+            if (date === 'Not selected' || time === 'Not selected') {
+                showToast('Please select a date and time slot!', 'error'); return;
+            }
+            document.getElementById('modalDate').textContent = date;
+            document.getElementById('modalTime').textContent = time;
+            openModal('confirmModal');
+        }
+    </script>
+</body>
+
+</html>
