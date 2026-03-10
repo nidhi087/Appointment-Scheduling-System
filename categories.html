@@ -347,6 +347,29 @@
     </footer>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Load real provider counts from API
+        (async () => {
+            try {
+                const cats = await api.get('/categories');
+                const countEls = document.querySelectorAll('.providers-count');
+                const catMap = {};
+                cats.forEach(c => catMap[c.name.toLowerCase()] = c.providerCount);
+                countEls.forEach(el => {
+                    const card = el.closest('a');
+                    if (!card) return;
+                    const href = card.getAttribute('href') || '';
+                    const match = href.match(/cat=(\w+)/);
+                    if (match) {
+                        const key = match[1];
+                        const count = catMap[key] || 0;
+                        el.textContent = `${count} Provider${count !== 1 ? 's' : ''}`;
+                    }
+                });
+            } catch (e) { /* API not running — keep static text */ }
+        })();
+    </script>
 </body>
 
 </html>

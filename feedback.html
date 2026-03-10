@@ -406,7 +406,15 @@
     </footer>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        if (!isLoggedIn()) { showToast('Please log in to leave feedback.','warning'); setTimeout(()=>window.location.href='login.html',1000); }
+
+        // Read IDs from URL: ?appt=XXX&provider=YYY
+        const urlP = new URLSearchParams(window.location.search);
+        const apptId    = urlP.get('appt')    || '';
+        const providerId = urlP.get('provider') || '';
+
         const labels = ['', 'Poor 😞', 'Fair 😐', 'Good 😊', 'Very Good 😄', 'Excellent! 🤩'];
         let currentRating = 0;
         const stars = document.querySelectorAll('#bigStars .star');
@@ -439,12 +447,20 @@
             });
         });
 
-        function submitFeedback() {
+        async function submitFeedback() {
             if (!currentRating) { showToast('Please select an overall rating!', 'error'); return; }
             const comment = document.getElementById('comment').value.trim();
             if (!comment) { showToast('Please write a review comment!', 'error'); return; }
-            showToast('Thank you! Your feedback has been submitted ⭐', 'success');
-            setTimeout(() => window.location.href = 'history.html', 1800);
+            if (!apptId || !providerId) {
+                showToast('Could not identify appointment. Please come from My Bookings.', 'error'); return;
+            }
+            try {
+                await api.post('/feedback', { appointment: apptId, provider: providerId, rating: currentRating, comment });
+                showToast('Thank you! Your feedback has been submitted ⭐', 'success');
+                setTimeout(() => window.location.href = 'history.html', 1800);
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
         }
     </script>
 </body>

@@ -430,12 +430,84 @@
     </footer>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        let allProviders = [];
+
+        // Read ?cat= from URL
+        const urlCat = new URLSearchParams(window.location.search).get('cat') || '';
+        if (urlCat) {
+            const radio = document.querySelector(`input[name="cat"][value="${urlCat}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        function renderProviders(providers) {
+            const grid = document.getElementById('providersGrid');
+            document.querySelector('.result-count').textContent =
+                `${providers.length} provider${providers.length !== 1 ? 's' : ''} found`;
+
+            if (!providers.length) {
+                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-muted)">
+                    <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+                    <h3 style="color:var(--text-primary);margin-bottom:0.4rem">No providers found</h3>
+                    <p>Try a different search or category.</p></div>`;
+                return;
+            }
+
+            grid.innerHTML = providers.map(p => `
+                <div class="provider-card">
+                    <div class="provider-avatar" style="background:${p.category?.color || 'rgba(249,115,22,0.12)'}">${p.avatarEmoji}</div>
+                    <div class="provider-name">${p.name}</div>
+                    <div class="provider-spec">${p.specialization}</div>
+                    <div class="provider-cat">${p.category?.icon || ''} ${p.category?.name || ''}</div>
+                    <div class="provider-meta">
+                        <span class="rating">⭐ ${p.rating.toFixed(1)}</span>
+                        <span class="exp">🏆 ${p.experienceYears} yrs exp</span>
+                        <span><span class="avail-dot"></span> Available</span>
+                    </div>
+                    <div class="provider-footer">
+                        <div class="provider-price">Fee: <span>₹${p.fee}</span></div>
+                        <a href="booking.html?provider=${p._id}" class="btn btn-primary btn-sm">Book Now</a>
+                    </div>
+                </div>`).join('');
+        }
+
+        function filterProviders() {
+            const search = document.getElementById('providerSearch').value.toLowerCase();
+            const catFilter = document.querySelector('input[name="cat"]:checked')?.value || 'all';
+            let filtered = allProviders;
+            if (catFilter !== 'all') {
+                filtered = filtered.filter(p => p.category?.name?.toLowerCase() === catFilter);
+            }
+            if (search) {
+                filtered = filtered.filter(p =>
+                    p.name.toLowerCase().includes(search) ||
+                    p.specialization.toLowerCase().includes(search)
+                );
+            }
+            renderProviders(filtered);
+        }
+
+        // Load providers from API
+        (async () => {
+            try {
+                const params = urlCat ? `?category=${urlCat}` : '';
+                allProviders = await api.get('/providers' + params);
+                renderProviders(allProviders);
+            } catch (e) {
+                document.getElementById('providersGrid').innerHTML =
+                    `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)">Could not load providers. Is the server running?</div>`;
+            }
+        })();
+
+        // Category filter radio change
+        document.querySelectorAll('input[name="cat"]').forEach(r => r.addEventListener('change', filterProviders));
+
+        // Rating chips (UI only for now)
         document.querySelectorAll('.rating-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.rating-chip').forEach(c => c.classList.remove('active'));
                 chip.classList.add('active');
-                showToast('Filter applied: ' + chip.textContent, 'info');
             });
         });
     </script>

@@ -266,6 +266,107 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        if (!isLoggedIn() || !isAdmin()) {
+            showToast('Admin access required.', 'error');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        async function loadCategories() {
+            try {
+                const cats = await api.get('/categories');
+                // Render cards
+                const grid = document.querySelector('.cat-admin-grid');
+                grid.innerHTML = cats.map(c => `
+                    <div class="cat-admin-card">
+                        <div class="cat-admin-icon" style="background:${c.color}">${c.icon}</div>
+                        <div class="cat-admin-info">
+                            <h3>${c.name}</h3>
+                            <p>${c.description || 'No description'} · ${c.providerCount || 0} providers</p>
+                        </div>
+                        <div class="cat-admin-actions">
+                            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${c._id}','${c.name}','${c.icon}','${c.description}')">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCategory('${c._id}','${c.name}', this)">🗑️</button>
+                        </div>
+                    </div>`).join('');
+
+                // Render table
+                const tbody = document.querySelector('table tbody');
+                tbody.innerHTML = cats.map((c, i) => `
+                    <tr>
+                        <td style="font-size:0.75rem;color:var(--text-muted)">${i+1}</td>
+                        <td>${c.name}</td>
+                        <td>${c.icon}</td>
+                        <td>${c.providerCount || 0}</td>
+                        <td>—</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" onclick="openEditModal('${c._id}','${c.name}','${c.icon}','${c.description}')">✏️</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCategory('${c._id}','${c.name}', this)">🗑️</button>
+                        </td>
+                    </tr>`).join('');
+            } catch(e) { showToast('Could not load categories.', 'error'); }
+        }
+
+        async function addCategory() {
+            const modal = document.getElementById('addCatModal');
+            const inputs = modal.querySelectorAll('input, textarea');
+            const name = inputs[0]?.value?.trim();
+            const icon = inputs[1]?.value?.trim() || '📋';
+            const description = inputs[2]?.value?.trim() || '';
+            if (!name) { showToast('Category name required.', 'error'); return; }
+            try {
+                await api.post('/categories', { name, icon, description });
+                showToast('Category added!', 'success');
+                closeModal('addCatModal');
+                modal.querySelectorAll('input, textarea').forEach(el => el.value = '');
+                loadCategories();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        let editingCatId = null;
+        function openEditModal(id, name, icon, desc) {
+            editingCatId = id;
+            const modal = document.getElementById('editCatModal');
+            const inputs = modal.querySelectorAll('input, textarea');
+            if (inputs[0]) inputs[0].value = name;
+            if (inputs[1]) inputs[1].value = icon;
+            if (inputs[2]) inputs[2].value = desc || '';
+            openModal('editCatModal');
+        }
+
+        async function saveCategory() {
+            const modal = document.getElementById('editCatModal');
+            const inputs = modal.querySelectorAll('input, textarea');
+            const name = inputs[0]?.value?.trim();
+            const icon = inputs[1]?.value?.trim();
+            const description = inputs[2]?.value?.trim();
+            if (!name) { showToast('Name required.', 'error'); return; }
+            try {
+                await api.put('/categories/' + editingCatId, { name, icon, description });
+                showToast('Category updated!', 'success');
+                closeModal('editCatModal');
+                loadCategories();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function deleteCategory(id, name, btn) {
+            if (!confirm(`Delete category "${name}"?`)) return;
+            btn.disabled = true;
+            try {
+                await api.delete('/categories/' + id);
+                showToast('Category deleted.', 'success');
+                loadCategories();
+            } catch(e) { showToast(e.message, 'error'); btn.disabled = false; }
+        }
+
+        // Wire modal buttons
+        document.querySelector('#addCatModal .modal-footer .btn-primary').onclick = addCategory;
+        document.querySelector('#editCatModal .modal-footer .btn-primary').onclick = saveCategory;
+
+        loadCategories();
+    </script>
 </body>
 
 </html>

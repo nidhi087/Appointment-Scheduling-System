@@ -463,22 +463,22 @@
         </div>
     </section>
 
-    <!-- Stats will be loaded from API -->
+    <!-- Stats band (populated by API) -->
     <div class="stats-band">
         <div class="stat-item">
-            <div class="num">—</div>
+            <div class="num" id="statAppts">—</div>
             <div class="lbl">Appointments Booked</div>
         </div>
         <div class="stat-item">
-            <div class="num">—</div>
+            <div class="num" id="statProviders">—</div>
             <div class="lbl">Verified Providers</div>
         </div>
         <div class="stat-item">
-            <div class="num">4</div>
+            <div class="num" id="statCats">—</div>
             <div class="lbl">Service Categories</div>
         </div>
         <div class="stat-item">
-            <div class="num">—</div>
+            <div class="num" id="statRate">—</div>
             <div class="lbl">% Satisfaction Rate</div>
         </div>
     </div>
@@ -628,6 +628,19 @@
     </footer>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        // Load real stats
+        (async () => {
+            try {
+                const s = await api.get('/stats');
+                document.getElementById('statAppts').textContent    = s.totalAppointments.toLocaleString();
+                document.getElementById('statProviders').textContent = s.totalProviders;
+                document.getElementById('statCats').textContent      = s.totalCategories;
+                document.getElementById('statRate').textContent      = s.satisfactionRate + '%';
+            } catch(e) { /* server not running — keep dashes */ }
+        })();
+    </script>
 </body>
 
 </html>

@@ -408,70 +408,137 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
-        // Build date strip (next 14 days)
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        if (!isLoggedIn()) {
+            showToast('Please log in to book an appointment.', 'warning');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const providerId = urlParams.get('provider') || '';
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         const strip = document.getElementById('dateStrip');
         const today = new Date();
         let selectedDate = null;
+        let selectedDateISO = null;
+        let selectedSlotId = null;
+        let providerData = null;
 
+        // Load provider info
+        async function loadProvider() {
+            if (!providerId) return;
+            try {
+                providerData = await api.get('/providers/' + providerId);
+                document.querySelector('.provider-info-avatar').textContent = providerData.avatarEmoji;
+                document.querySelector('.provider-info-name').textContent = providerData.name;
+                document.querySelector('.provider-info-spec').textContent = providerData.specialization;
+                document.querySelector('.provider-info-meta').textContent =
+                    `${providerData.category?.name || ''} · ⭐ ${providerData.rating} · ${providerData.experienceYears} yrs exp`;
+                document.getElementById('summaryProvider').textContent = providerData.name;
+                document.getElementById('summarySpec').textContent = providerData.specialization;
+                document.querySelector('.summary-total .value').textContent = `₹${providerData.fee}`;
+            } catch(e) { /* keep defaults */ }
+        }
+
+        // Build date strip (next 14 days)
         for (let i = 0; i < 14; i++) {
             const d = new Date(today);
             d.setDate(today.getDate() + i);
             const chip = document.createElement('div');
             chip.className = 'date-chip' + (i === 0 ? ' today' : '');
+            chip.dataset.iso = d.toISOString().split('T')[0];
             chip.innerHTML = `<div class="day">${days[d.getDay()]}</div><div class="num">${d.getDate()}</div><div class="mon">${months[d.getMonth()]}</div>`;
             chip.addEventListener('click', () => {
                 document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
                 chip.classList.add('selected');
+                selectedDateISO = chip.dataset.iso;
                 selectedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                 document.getElementById('summaryDate').textContent = selectedDate;
-                showToast('Date selected: ' + selectedDate, 'info');
+                selectedSlotId = null;
+                document.getElementById('summaryTime').textContent = 'Not selected';
+                loadSlots(selectedDateISO);
             });
             strip.appendChild(chip);
         }
 
-        // Build slots
-        const morning = ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM'];
-        const afternoon = ['12:00 PM', '12:30 PM', '01:00 PM', '02:00 PM', '02:30 PM', '03:00 PM'];
-        const evening = ['05:00 PM', '05:30 PM', '06:00 PM', '06:30 PM', '07:00 PM'];
-        const booked = ['09:30 AM', '12:00 PM', '06:00 PM'];
-
-        function buildSlots(times, containerId) {
-            const container = document.getElementById(containerId);
-            times.forEach(time => {
-                const btn = document.createElement('button');
-                btn.className = 'slot-btn' + (booked.includes(time) ? ' disabled-slot' : '');
-                btn.textContent = time;
-                btn.dataset.time = time;
-                if (booked.includes(time)) {
-                    btn.disabled = true;
-                    btn.style.cssText = 'opacity:0.4; cursor:not-allowed; text-decoration:line-through; color:var(--danger)';
-                }
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                    btn.classList.add('selected');
-                    document.getElementById('summaryTime').textContent = time;
-                });
-                container.appendChild(btn);
+        // Load real slots from backend
+        async function loadSlots(dateISO) {
+            ['morningSlots','afternoonSlots','eveningSlots'].forEach(id => {
+                document.getElementById(id).innerHTML = '';
             });
+            if (!providerId) {
+                document.getElementById('morningSlots').innerHTML = '<p style="color:var(--text-muted);font-size:0.83rem">Please select a provider first.</p>';
+                return;
+            }
+            try {
+                const slots = await api.get(`/slots?provider_id=${providerId}&date=${dateISO}`);
+                if (!slots.length) {
+                    document.getElementById('morningSlots').innerHTML = '<p style="color:var(--text-muted);font-size:0.83rem">No slots available for this date.</p>';
+                    return;
+                }
+                slots.forEach(slot => {
+                    const hour = parseInt(slot.time.split(':')[0]);
+                    const isPM = slot.time.includes('PM');
+                    const hour24 = isPM && hour !== 12 ? hour + 12 : (!isPM && hour === 12 ? 0 : hour);
+                    const containerId = hour24 < 12 ? 'morningSlots' : (hour24 < 17 ? 'afternoonSlots' : 'eveningSlots');
+                    const container = document.getElementById(containerId);
+                    const btn = document.createElement('button');
+                    btn.className = 'slot-btn';
+                    btn.textContent = slot.time;
+                    btn.dataset.slotId = slot._id;
+                    if (slot.isBooked) {
+                        btn.disabled = true;
+                        btn.style.cssText = 'opacity:0.4;cursor:not-allowed;text-decoration:line-through;color:var(--danger)';
+                    } else {
+                        btn.addEventListener('click', () => {
+                            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            selectedSlotId = slot._id;
+                            document.getElementById('summaryTime').textContent = slot.time;
+                        });
+                    }
+                    container.appendChild(btn);
+                });
+            } catch(e) {
+                document.getElementById('morningSlots').innerHTML = '<p style="color:var(--danger);font-size:0.83rem">Could not load slots. Is the server running?</p>';
+            }
         }
 
-        buildSlots(morning, 'morningSlots');
-        buildSlots(afternoon, 'afternoonSlots');
-        buildSlots(evening, 'eveningSlots');
-
-        function confirmBooking() {
+        async function confirmBooking() {
+            if (!isLoggedIn()) { window.location.href = 'login.html'; return; }
             const date = document.getElementById('summaryDate').textContent;
             const time = document.getElementById('summaryTime').textContent;
-            if (date === 'Not selected' || time === 'Not selected') {
-                showToast('Please select a date and time slot!', 'error'); return;
+            if (date === 'Not selected') { showToast('Please select a date!', 'error'); return; }
+            if (time === 'Not selected') { showToast('Please select a time slot!', 'error'); return; }
+            if (!providerId || !selectedSlotId) { showToast('Missing provider or slot info.', 'error'); return; }
+            const mode = document.querySelector('.summary-card select').value;
+            const notes = document.getElementById('bookingNotes').value.trim();
+            const btn = document.getElementById('confirmBtn');
+            btn.innerHTML = '<span class="spinner"></span> Confirming...';
+            btn.disabled = true;
+            try {
+                await api.post('/appointments', {
+                    provider: providerId,
+                    slot: selectedSlotId,
+                    date: selectedDateISO,
+                    time,
+                    mode,
+                    notes
+                });
+                document.getElementById('modalDate').textContent = date;
+                document.getElementById('modalTime').textContent = time;
+                openModal('confirmModal');
+                showToast('Appointment booked successfully! 🎉', 'success');
+            } catch(e) {
+                showToast(e.message, 'error');
+                btn.innerHTML = 'Confirm Booking';
+                btn.disabled = false;
             }
-            document.getElementById('modalDate').textContent = date;
-            document.getElementById('modalTime').textContent = time;
-            openModal('confirmModal');
         }
+
+        loadProvider();
     </script>
 </body>
 

@@ -245,26 +245,88 @@
     </footer>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        if (!isLoggedIn()) { showToast('Please log in to view your bookings.','warning'); setTimeout(()=>window.location.href='login.html',1000); }
+
+        let appointments = [];
+
         function switchTab(name, btn) {
-            ['upcoming', 'completed', 'cancelled'].forEach(t => {
-                const el = document.getElementById('tab-' + t);
-                if (el) el.classList.toggle('hidden', t !== name);
+            ['upcoming','completed','cancelled'].forEach(t => {
+                document.getElementById('tab-'+t).classList.toggle('hidden', t !== name);
             });
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
 
-        function cancelAppt(btn) {
-            if (confirm('Are you sure you want to cancel this appointment?')) {
-                const card = btn.closest('.appointment-card');
-                card.style.opacity = '0';
-                card.style.transform = 'translateX(-20px)';
-                card.style.transition = '0.4s ease';
-                setTimeout(() => card.remove(), 400);
-                showToast('Appointment cancelled successfully.', 'success');
+        function statusBadge(s) {
+            const map = { confirmed:'badge-success', completed:'badge-info', cancelled:'badge-danger' };
+            return `<span class="badge ${map[s] || ''}">${s}</span>`;
+        }
+
+        function renderCards(containerId, items) {
+            const el = document.getElementById(containerId);
+            if (!items.length) {
+                el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><h3>No appointments here</h3><p>Nothing to show in this tab yet.</p></div>`;
+                return;
+            }
+            el.innerHTML = items.map(a => `
+                <div class="appointment-card" id="appt-${a._id}">
+                    <div class="appt-icon" style="background:rgba(249,115,22,0.1)">${a.provider?.avatarEmoji || '👤'}</div>
+                    <div>
+                        <div class="appt-provider">${a.provider?.name || 'Provider'}</div>
+                        <div class="appt-spec">${a.provider?.specialization || ''}</div>
+                        <div class="appt-meta">
+                            <span>📅 ${a.date}</span>
+                            <span>⏰ ${a.time}</span>
+                            <span>📍 ${a.mode}</span>
+                            <span>💰 ₹${a.provider?.fee || '—'}</span>
+                        </div>
+                        <div class="appt-id">ID: ${a._id}</div>
+                    </div>
+                    <div class="appt-actions">
+                        ${statusBadge(a.status)}
+                        ${a.status === 'confirmed' ? `<button class="btn btn-danger btn-sm" onclick="cancelAppt('${a._id}', this)">Cancel</button>` : ''}
+                        ${a.status === 'completed' ? `<a href="feedback.html?appt=${a._id}&provider=${a.provider?._id}" class="btn btn-ghost btn-sm">Leave Review</a>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+
+        async function loadAppointments() {
+            try {
+                appointments = await api.get('/appointments');
+                const upcoming   = appointments.filter(a => a.status === 'confirmed');
+                const completed  = appointments.filter(a => a.status === 'completed');
+                const cancelled  = appointments.filter(a => a.status === 'cancelled');
+
+                // Update tab counts
+                const [b1,b2,b3] = document.querySelectorAll('.tab-btn');
+                b1.textContent = `📅 Upcoming (${upcoming.length})`;
+                b2.textContent = `✅ Completed (${completed.length})`;
+                b3.textContent = `❌ Cancelled (${cancelled.length})`;
+
+                renderCards('tab-upcoming',  upcoming);
+                renderCards('tab-completed', completed);
+                renderCards('tab-cancelled', cancelled);
+            } catch(e) {
+                showToast('Could not load appointments.', 'error');
             }
         }
+
+        async function cancelAppt(id, btn) {
+            if (!confirm('Cancel this appointment?')) return;
+            btn.disabled = true;
+            try {
+                await api.patch(`/appointments/${id}/cancel`);
+                showToast('Appointment cancelled.', 'success');
+                await loadAppointments();
+            } catch(e) {
+                showToast(e.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        loadAppointments();
     </script>
 </body>
 

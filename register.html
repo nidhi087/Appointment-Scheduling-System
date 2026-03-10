@@ -342,7 +342,10 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        if (isLoggedIn()) window.location.href = 'categories.html';
+
         function checkStrength(val) {
             const fill = document.getElementById('strengthFill');
             const label = document.getElementById('strengthLabel');
@@ -364,20 +367,26 @@
             label.style.color = lvl.color;
         }
 
-        function handleRegister(e) {
+        async function handleRegister(e) {
             e.preventDefault();
-            const pw = document.getElementById('regPassword').value;
+            const pw  = document.getElementById('regPassword').value;
             const cpw = document.getElementById('confirmPassword').value;
             if (pw !== cpw) { showToast('Passwords do not match!', 'error'); return; }
             const btn = document.getElementById('registerBtn');
             btn.innerHTML = '<span class="spinner"></span> Creating account...';
             btn.disabled = true;
-            setTimeout(() => {
-                showToast('Account created successfully!', 'success');
-                setTimeout(() => window.location.href = 'categories.html', 1000);
+            try {
+                const name  = document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value;
+                const email = document.getElementById('regEmail').value;
+                const data  = await api.post('/auth/register', { name, email, password: pw });
+                saveAuth(data.token, data.user);
+                showToast('Account created! Welcome to AppointEase 🎉', 'success');
+                setTimeout(() => window.location.href = 'categories.html', 900);
+            } catch (err) {
+                showToast(err.message, 'error');
                 btn.innerHTML = 'Create Free Account';
                 btn.disabled = false;
-            }, 1800);
+            }
         }
     </script>
 </body>

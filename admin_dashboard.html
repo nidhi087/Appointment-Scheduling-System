@@ -397,7 +397,63 @@
     </main>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        // Admin guard
+        if (!isLoggedIn() || !isAdmin()) {
+            showToast('Admin access required.', 'error');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
+        // Show logged-in admin name
+        const adminUser = getUser();
+        if (adminUser) {
+            document.querySelector('.topbar-user span').textContent = `Welcome, ${adminUser.name.split(' ')[0]}`;
+            document.querySelector('.topbar-user .user-av').textContent = adminUser.name[0].toUpperCase();
+        }
+
+        function statusBadge(s) {
+            const map = { confirmed: 'badge-success', completed: 'badge-info', cancelled: 'badge-danger' };
+            return `<span class="badge ${map[s] || ''}">${s}</span>`;
+        }
+
+        async function loadDashboard() {
+            try {
+                // Stats
+                const stats = await api.get('/stats');
+                const statCards = document.querySelectorAll('.stat-card .stat-value');
+                if (statCards[0]) statCards[0].textContent = stats.totalAppointments;
+                if (statCards[1]) statCards[1].textContent = stats.totalProviders;
+
+                // All appointments for extra stats
+                const allAppts = await api.get('/appointments/admin/all');
+                const confirmed = allAppts.filter(a => a.status === 'confirmed').length;
+                const cancelled = allAppts.filter(a => a.status === 'cancelled').length;
+                if (statCards[2]) statCards[2].textContent = confirmed;
+                if (statCards[3]) statCards[3].textContent = cancelled;
+
+                // Recent appointments table
+                const tbody = document.querySelector('.recent-table-card tbody');
+                const recent = allAppts.slice(0, 5);
+                if (!recent.length) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted)">No appointments yet.</td></tr>';
+                } else {
+                    tbody.innerHTML = recent.map(a => `
+                        <tr>
+                            <td style="font-size:0.72rem;color:var(--text-muted)">${a._id.slice(-6).toUpperCase()}</td>
+                            <td>${a.user?.name || '—'}</td>
+                            <td>${a.provider?.name || '—'}</td>
+                            <td>—</td>
+                            <td>${a.date} · ${a.time}</td>
+                            <td>${statusBadge(a.status)}</td>
+                            <td><a href="admin_appointments.html" class="btn btn-ghost btn-sm">View</a></td>
+                        </tr>`).join('');
+                }
+            } catch(e) {
+                console.error('Dashboard load error:', e.message);
+            }
+        }
+
         function approve(btn) {
             const item = btn.closest('.activity-item');
             item.style.opacity = '0';
@@ -413,6 +469,8 @@
         if (window.innerWidth <= 900) {
             document.getElementById('sidebarToggle').style.display = 'flex';
         }
+
+        loadDashboard();
     </script>
 </body>
 

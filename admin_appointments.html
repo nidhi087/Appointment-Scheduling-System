@@ -252,35 +252,16 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
-        function approveRow(btn) {
-            const td = btn.closest('td');
-            const statusTd = td.previousElementSibling;
-            if (statusTd) statusTd.innerHTML = '<span class="badge badge-success">✅ Confirmed</span>';
-            td.innerHTML = '<button class="btn btn-danger btn-sm" onclick="cancelRow(this)">Cancel</button>';
-            showToast('Appointment approved!', 'success');
+        if (!isLoggedIn() || !isAdmin()) {
+            showToast('Admin access required.', 'error');
+            setTimeout(() => window.location.href = 'login.html', 1000);
         }
 
-        function rejectRow(btn) {
-            const td = btn.closest('td');
-            const statusTd = td.previousElementSibling;
-            if (statusTd) statusTd.innerHTML = '<span class="badge badge-danger">❌ Rejected</span>';
-            td.innerHTML = '—';
-            showToast('Appointment rejected.', 'error');
-        }
-
-        function cancelRow(btn) {
-            if (confirm('Cancel this appointment?')) {
-                const td = btn.closest('td');
-                const statusTd = td.previousElementSibling;
-                if (statusTd) statusTd.innerHTML = '<span class="badge badge-danger">❌ Cancelled</span>';
-                td.innerHTML = '—';
-                showToast('Appointment cancelled.', 'error');
-            }
-        }
-
-        function selectAllRows(chk) {
-            document.querySelectorAll('#apptBody input[type=checkbox]').forEach(c => c.checked = chk.checked);
+        function statusBadge(s) {
+            const map = { confirmed: 'badge-success', completed: 'badge-info', cancelled: 'badge-danger' };
+            return `<span class="badge ${map[s] || ''}">${s}</span>`;
         }
 
         function filterTable(input, tableId) {
@@ -290,9 +271,65 @@
             });
         }
 
-        function bulkApprove() {
-            showToast('All 42 pending appointments approved!', 'success');
+        function selectAllRows(chk) {
+            document.querySelectorAll('#apptBody input[type=checkbox]').forEach(c => c.checked = chk.checked);
         }
+
+        async function changeStatus(id, status, btn) {
+            btn.disabled = true;
+            try {
+                await api.patch(`/appointments/admin/${id}/status`, { status });
+                showToast(`Status updated to ${status}`, 'success');
+                await loadAppointments();
+            } catch(e) {
+                showToast(e.message, 'error');
+                btn.disabled = false;
+            }
+        }
+
+        async function loadAppointments() {
+            try {
+                const appts = await api.get('/appointments/admin/all');
+                const total     = appts.length;
+                const confirmed = appts.filter(a => a.status === 'confirmed').length;
+                const completed = appts.filter(a => a.status === 'completed').length;
+                const cancelled = appts.filter(a => a.status === 'cancelled').length;
+
+                const statVals = document.querySelectorAll('.stat-card .stat-value');
+                if (statVals[0]) statVals[0].textContent = total;
+                if (statVals[1]) statVals[1].textContent = confirmed;
+                if (statVals[2]) statVals[2].textContent = completed;
+                if (statVals[3]) statVals[3].textContent = cancelled;
+
+                const tbody = document.getElementById('apptBody');
+                if (!appts.length) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text-muted)">No appointments found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = appts.map(a => `
+                    <tr>
+                        <td><input type="checkbox" style="accent-color:var(--accent)" /></td>
+                        <td style="font-size:0.72rem;color:var(--text-muted)">${a._id.slice(-6).toUpperCase()}</td>
+                        <td>${a.user?.name || '—'}<br><span style="font-size:0.72rem;color:var(--text-muted)">${a.user?.email || ''}</span></td>
+                        <td>${a.provider?.name || '—'}</td>
+                        <td>—</td>
+                        <td>${a.date}<br><span style="font-size:0.75rem;color:var(--text-muted)">${a.time}</span></td>
+                        <td>30 min</td>
+                        <td>₹${a.provider?.fee || '—'}</td>
+                        <td>${statusBadge(a.status)}</td>
+                        <td>
+                            ${a.status === 'confirmed' ? `
+                                <button class="btn btn-success btn-sm" onclick="changeStatus('${a._id}','completed',this)">✓ Complete</button>
+                                <button class="btn btn-danger btn-sm" onclick="changeStatus('${a._id}','cancelled',this)">✕ Cancel</button>
+                            ` : '—'}
+                        </td>
+                    </tr>`).join('');
+            } catch(e) {
+                showToast('Could not load appointments.', 'error');
+            }
+        }
+
+        loadAppointments();
     </script>
 </body>
 

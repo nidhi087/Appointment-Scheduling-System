@@ -360,25 +360,30 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
-        function handleLogin(e) {
+        // Redirect if already logged in
+        if (isLoggedIn()) window.location.href = isAdmin() ? 'admin_dashboard.html' : 'categories.html';
+
+        async function handleLogin(e) {
             e.preventDefault();
             const btn = document.getElementById('loginBtn');
             btn.innerHTML = '<span class="spinner"></span> Signing in...';
             btn.disabled = true;
-
-            setTimeout(() => {
+            try {
                 const email = document.getElementById('email').value;
-                if (email === 'admin@appointease.com') {
-                    showToast('Admin login successful!', 'success');
-                    setTimeout(() => window.location.href = 'admin_dashboard.html', 1000);
-                } else {
-                    showToast('Login successful! Redirecting...', 'success');
-                    setTimeout(() => window.location.href = 'categories.html', 1000);
-                }
+                const password = document.getElementById('password').value;
+                const data = await api.post('/auth/login', { email, password });
+                saveAuth(data.token, data.user);
+                showToast('Login successful! Redirecting...', 'success');
+                setTimeout(() => {
+                    window.location.href = data.user.role === 'admin' ? 'admin_dashboard.html' : 'categories.html';
+                }, 800);
+            } catch (err) {
+                showToast(err.message, 'error');
                 btn.innerHTML = 'Sign In';
                 btn.disabled = false;
-            }, 1500);
+            }
         }
     </script>
 </body>

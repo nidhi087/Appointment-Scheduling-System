@@ -311,23 +311,96 @@
     </div>
 
     <script src="js/script.js"></script>
+    <script src="js/api.js"></script>
     <script>
+        if (!isLoggedIn() || !isAdmin()) {
+            showToast('Admin access required.', 'error');
+            setTimeout(() => window.location.href = 'login.html', 1000);
+        }
+
         // Set today's date
         document.getElementById('slotDate').value = new Date().toISOString().split('T')[0];
 
-        // Slot preview placeholder — slots will load from backend
-        const preview = document.getElementById('slotsPreview');
-        preview.innerHTML = '<p style="font-size:0.82rem; color:var(--text-muted); text-align:center; padding:20px">Select a provider and click Generate Slots to see the preview.</p>';
+        let allProviders = [];
 
-        function generateSlots() {
-            const provider = document.querySelector('.config-card select').value;
-            if (!provider) { showToast('Please select a provider first', 'error'); return; }
-            showToast('Slots will be generated from the backend.', 'info');
+        async function loadProviders() {
+            try {
+                allProviders = await api.get('/providers');
+                // Populate all provider dropdowns
+                const providerSelHtml = `<option value="">-- Select a Provider --</option>` +
+                    allProviders.map(p => `<option value="${p._id}">${p.avatarEmoji} ${p.name}</option>`).join('');
+
+                const configSel = document.querySelector('.config-card select');
+                if (configSel) configSel.innerHTML = providerSelHtml;
+
+                const modalSel = document.querySelector('#addSlotModal select');
+                if (modalSel) modalSel.innerHTML = providerSelHtml;
+            } catch(e) {}
         }
 
-        // Add Slot Modal: provider dropdown populated from API
-        const addProviderSelect = document.querySelector('#addSlotModal select');
-        if (addProviderSelect) addProviderSelect.innerHTML = '<option value="">-- Select a Provider --</option>';
+        async function loadSlots() {
+            try {
+                const slots = await api.get('/slots');
+                const tbody = document.querySelector('table tbody');
+                if (!slots.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">No slots yet. Select a provider and generate slots above.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = slots.slice(0, 50).map(s => {
+                    const prov = allProviders.find(p => p._id === (s.provider?._id || s.provider)) || {};
+                    return `
+                    <tr>
+                        <td>${prov.name || '—'}</td>
+                        <td>${s.date}</td>
+                        <td>${s.time}</td>
+                        <td>30 min</td>
+                        <td>${s.isBooked
+                            ? '<span class="badge badge-success">Booked</span>'
+                            : '<span class="badge">Available</span>'}</td>
+                        <td>
+                            ${!s.isBooked ? `<button class="btn btn-danger btn-sm" onclick="deleteSlot('${s._id}', this)">🗑️</button>` : '—'}
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch(e) {}
+        }
+
+        async function generateSlots() {
+            const providerId = document.querySelector('.config-card select')?.value;
+            const date = document.getElementById('slotDate').value;
+            if (!providerId) { showToast('Please select a provider first', 'error'); return; }
+            if (!date) { showToast('Please select a date first', 'error'); return; }
+
+            const times = [
+                '09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM',
+                '12:00 PM','12:30 PM','02:00 PM','02:30 PM','03:00 PM',
+                '05:00 PM','05:30 PM','06:00 PM','06:30 PM'
+            ];
+
+            try {
+                const slots = await api.post('/slots', { provider: providerId, date, times });
+                showToast(`${slots.length} slots generated for ${date}!`, 'success');
+
+                // Preview
+                const preview = document.getElementById('slotsPreview');
+                preview.innerHTML = slots.map(s =>
+                    `<div class="slot-preview-item"><span>${s.time}</span><span class="rm" onclick="deleteSlot('${s._id}', this.closest('.slot-preview-item'))">✕</span></div>`
+                ).join('');
+                loadSlots();
+            } catch(e) { showToast(e.message, 'error'); }
+        }
+
+        async function deleteSlot(id, el) {
+            el.style.opacity = '0.4';
+            try {
+                await api.delete('/slots/' + id);
+                el.remove ? el.remove() : el.closest('tr')?.remove();
+                showToast('Slot deleted.', 'success');
+                loadSlots();
+            } catch(e) { showToast(e.message, 'error'); el.style.opacity = '1'; }
+        }
+
+        loadProviders().then(() => loadSlots());
     </script>
 </body>
 
