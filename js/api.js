@@ -3,7 +3,7 @@
    All pages include this file to communicate with the backend.
    ============================================================ */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = '/api';
 
 // ── Token helpers ─────────────────────────────────────────────
 function getToken()      { return localStorage.getItem('ae_token'); }
