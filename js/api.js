@@ -6,19 +6,23 @@
 const API_BASE = 'http://localhost:5000/api';
 
 // ── Token helpers ─────────────────────────────────────────────
-function getToken()  { return localStorage.getItem('ae_token'); }
-function getUser()   { const u = localStorage.getItem('ae_user'); return u ? JSON.parse(u) : null; }
-function isAdmin()   { const u = getUser(); return u && u.role === 'admin'; }
-function isLoggedIn(){ return !!getToken(); }
+function getToken()      { return localStorage.getItem('ae_token'); }
+function getUser()       { const u = localStorage.getItem('ae_user'); return u ? JSON.parse(u) : null; }
+function isAdmin()       { const u = getUser(); return u && u.role === 'admin'; }
+function isProvider()    { const u = getUser(); return u && u.role === 'provider'; }
+function isLoggedIn()    { return !!getToken(); }
+function getProviderId() { return localStorage.getItem('ae_provider_id'); }
 
-function saveAuth(token, user) {
+function saveAuth(token, user, providerId = null) {
   localStorage.setItem('ae_token', token);
   localStorage.setItem('ae_user', JSON.stringify(user));
+  if (providerId) localStorage.setItem('ae_provider_id', providerId);
 }
 
 function clearAuth() {
   localStorage.removeItem('ae_token');
   localStorage.removeItem('ae_user');
+  localStorage.removeItem('ae_provider_id');
 }
 
 // ── Core fetch wrapper ────────────────────────────────────────
@@ -55,9 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!navActions) return;
   const user = getUser();
   if (user) {
+    let dashLink = '';
+    if (user.role === 'admin')         dashLink = `<a href="admin_dashboard.html" class="btn btn-outline btn-sm">⚙️ Admin</a>`;
+    else if (user.role === 'provider') dashLink = `<a href="provider_dashboard.html" class="btn btn-outline btn-sm">📊 My Dashboard</a>`;
+    else                               dashLink = `<a href="history.html" class="btn btn-ghost btn-sm">My Bookings</a>`;
     navActions.innerHTML = `
       <span style="font-size:0.85rem; color:var(--text-muted); margin-right:8px">Hi, ${user.name.split(' ')[0]}!</span>
-      ${user.role === 'admin' ? `<a href="admin_dashboard.html" class="btn btn-outline btn-sm">⚙️ Admin</a>` : `<a href="history.html" class="btn btn-ghost btn-sm">My Bookings</a>`}
+      ${dashLink}
       <button class="btn btn-outline btn-sm" onclick="logout()">Sign Out</button>`;
   }
 });

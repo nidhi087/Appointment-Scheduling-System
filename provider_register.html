@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join as Provider — AppointEase</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .register-wrap { display:grid; grid-template-columns:1fr 1fr; min-height:calc(100vh - var(--nav-h)); margin-top:var(--nav-h); }
+    .register-hero { background:linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:3rem; color:#fff; text-align:center; }
+    .register-hero h2 { font-size:2rem; font-weight:800; margin-bottom:1rem; }
+    .register-hero p { opacity:0.85; font-size:0.95rem; line-height:1.8; max-width:340px; }
+    .hero-perks { margin-top:2rem; display:flex; flex-direction:column; gap:14px; text-align:left; }
+    .perk { display:flex; align-items:center; gap:10px; font-size:0.9rem; }
+    .register-form-box { display:flex; align-items:center; justify-content:center; padding:3rem 2rem; background:var(--primary); overflow-y:auto; }
+    .register-form-inner { width:100%; max-width:520px; }
+    .register-form-inner h1 { font-size:1.6rem; font-weight:800; margin-bottom:0.4rem; }
+    .register-form-inner .subtitle { color:var(--text-muted); font-size:0.88rem; margin-bottom:2rem; }
+    .grid-2f { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .emoji-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+    .emoji-btn { width:40px; height:40px; border-radius:8px; border:1.5px solid var(--card-border); background:var(--input-bg); font-size:1.3rem; cursor:pointer; transition:all var(--transition); display:flex;align-items:center;justify-content:center; }
+    .emoji-btn.selected { border-color:var(--accent); background:rgba(124,58,237,0.12); }
+    @media(max-width:800px){ .register-wrap{grid-template-columns:1fr;} .register-hero{display:none;} }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><div class="brand-icon">📅</div>Appoint<span>Ease</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="categories.html">Services</a></li>
+      <li><a href="providers.html">Providers</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn btn-outline btn-sm">Sign In</a>
+      <a href="register.html" class="btn btn-ghost btn-sm">Patient Sign Up</a>
+    </div>
+    <div class="hamburger"><span></span><span></span><span></span></div>
+  </nav>
+
+  <div class="register-wrap">
+    <!-- Left hero panel -->
+    <div class="register-hero">
+      <div style="font-size:4rem;margin-bottom:1rem">🩺</div>
+      <h2>Grow Your Practice</h2>
+      <p>Join thousands of professionals who use AppointEase to manage their appointments effortlessly.</p>
+      <div class="hero-perks">
+        <div class="perk">✅ Self-manage your slots — no admin needed</div>
+        <div class="perk">✅ See all patient bookings in one place</div>
+        <div class="perk">✅ Free to join — zero platform fee</div>
+        <div class="perk">✅ Go live in under 2 minutes</div>
+      </div>
+    </div>
+
+    <!-- Right form panel -->
+    <div class="register-form-box">
+      <div class="register-form-inner">
+        <h1>Join as a Provider</h1>
+        <p class="subtitle">Already have an account? <a href="login.html" style="color:var(--accent)">Sign in →</a></p>
+
+        <form id="providerForm">
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="pName" class="form-control" placeholder="Dr. Aisha Sharma" required />
+            </div>
+            <div class="form-group">
+              <label>Email Address *</label>
+              <input type="email" id="pEmail" class="form-control" placeholder="doctor@email.com" required />
+            </div>
+          </div>
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Password *</label>
+              <div class="input-group">
+                <input type="password" id="pPassword" class="form-control" placeholder="Min 6 characters" required />
+                <span class="toggle-pw">👁</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="pPhone" class="form-control" placeholder="+91 98765 43210" />
+            </div>
+          </div>
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Specialization *</label>
+              <input type="text" id="pSpec" class="form-control" placeholder="e.g. General Physician" required />
+            </div>
+            <div class="form-group">
+              <label>Category *</label>
+              <select id="pCategory" class="form-control" required>
+                <option value="">Loading categories...</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Consultation Fee (₹) *</label>
+              <input type="number" id="pFee" class="form-control" placeholder="500" min="0" required />
+            </div>
+            <div class="form-group">
+              <label>Experience (years) *</label>
+              <input type="number" id="pExp" class="form-control" placeholder="5" min="0" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location / Clinic Address</label>
+            <input type="text" id="pLocation" class="form-control" placeholder="e.g. Sector 12, Dwarka, New Delhi" />
+          </div>
+          <div class="form-group">
+            <label>Bio / About You</label>
+            <textarea id="pBio" class="form-control" rows="3" placeholder="Brief description of your expertise and experience..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Choose Your Avatar</label>
+            <div class="emoji-grid" id="emojiGrid">
+              <button type="button" class="emoji-btn selected" data-emoji="👨‍⚕️">👨‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="👩‍⚕️">👩‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍⚕️">🧑‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="👨‍💼">👨‍💼</button>
+              <button type="button" class="emoji-btn" data-emoji="👩‍💼">👩‍💼</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍🏫">🧑‍🏫</button>
+              <button type="button" class="emoji-btn" data-emoji="💆‍♀️">💆‍♀️</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍🔬">🧑‍🔬</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="submitBtn" style="margin-top:0.5rem">
+            🚀 Create Provider Account
+          </button>
+          <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:12px">
+            By joining you agree to our Terms of Service. It's completely free.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (isLoggedIn()) window.location.href = isProvider() ? 'provider_dashboard.html' : 'index.html';
+
+    let selectedEmoji = '👨‍⚕️';
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedEmoji = btn.dataset.emoji;
+      });
+    });
+
+    // Load categories
+    (async () => {
+      try {
+        const cats = await api.get('/categories');
+        const sel = document.getElementById('pCategory');
+        sel.innerHTML = '<option value="">Select a category</option>' +
+          cats.map(c => `<option value="${c._id}">${c.icon} ${c.name}</option>`).join('');
+      } catch(e) { document.getElementById('pCategory').innerHTML = '<option value="">Could not load categories</option>'; }
+    })();
+
+    document.getElementById('providerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      btn.innerHTML = '⏳ Creating account...'; btn.disabled = true;
+      try {
+        const res = await api.post('/auth/register-provider', {
+          name: document.getElementById('pName').value.trim(),
+          email: document.getElementById('pEmail').value.trim(),
+          password: document.getElementById('pPassword').value,
+          phone: document.getElementById('pPhone').value.trim(),
+          specialization: document.getElementById('pSpec').value.trim(),
+          category: document.getElementById('pCategory').value,
+          fee: parseInt(document.getElementById('pFee').value) || 500,
+          experienceYears: parseInt(document.getElementById('pExp').value) || 1,
+          location: document.getElementById('pLocation').value.trim(),
+          bio: document.getElementById('pBio').value.trim(),
+          avatarEmoji: selectedEmoji
+        });
+        saveAuth(res.token, res.user, res.providerId);
+        showToast('Welcome to AppointEase! 🎉', 'success');
+        setTimeout(() => window.location.href = 'provider_dashboard.html', 900);
+      } catch(err) {
+        showToast(err.message || 'Registration failed. Please try again.', 'error');
+        btn.innerHTML = '🚀 Create Provider Account'; btn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

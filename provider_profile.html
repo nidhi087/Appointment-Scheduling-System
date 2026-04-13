@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Profile — AppointEase Provider</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .provider-layout { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - var(--nav-h)); margin-top:var(--nav-h); }
+    .provider-sidebar { background:var(--secondary); border-right:1px solid var(--card-border); padding:2rem 1.2rem; position:sticky; top:var(--nav-h); height:calc(100vh - var(--nav-h)); overflow-y:auto; }
+    .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; color:var(--text-muted); font-size:0.88rem; font-weight:500; text-decoration:none; transition:all var(--transition); margin-bottom:2px; }
+    .sidebar-nav a:hover, .sidebar-nav a.active { background:rgba(124,58,237,0.1); color:var(--accent); font-weight:700; }
+    .provider-main { padding:2.5rem; overflow-y:auto; }
+    .profile-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:2rem; max-width:700px; }
+    .profile-preview { display:flex; align-items:center; gap:1.5rem; margin-bottom:2rem; padding-bottom:2rem; border-bottom:1px solid var(--card-border); }
+    .preview-avatar { font-size:3.5rem; width:80px; height:80px; background:linear-gradient(135deg,var(--accent),var(--highlight)); border-radius:50%; display:flex;align-items:center;justify-content:center; flex-shrink:0; }
+    .preview-info h2 { font-size:1.2rem; font-weight:700; }
+    .preview-info p { color:var(--text-muted); font-size:0.85rem; }
+    .grid-2f { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .emoji-grid { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+    .emoji-btn { width:40px; height:40px; border-radius:8px; border:1.5px solid var(--card-border); background:var(--input-bg); font-size:1.3rem; cursor:pointer; transition:all var(--transition); display:flex;align-items:center;justify-content:center; }
+    .emoji-btn.selected { border-color:var(--accent); background:rgba(124,58,237,0.12); }
+    @media(max-width:800px){.provider-layout{grid-template-columns:1fr;}.provider-sidebar{display:none;}.grid-2f{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><div class="brand-icon">📅</div>Appoint<span>Ease</span></a>
+    <ul class="nav-links">
+      <li><a href="provider_dashboard.html">Dashboard</a></li>
+      <li><a href="provider_appointments.html">Appointments</a></li>
+      <li><a href="provider_slots.html">Slots</a></li>
+      <li><a href="provider_profile.html" class="active">Profile</a></li>
+    </ul>
+    <div class="nav-actions"></div>
+    <div class="hamburger"><span></span><span></span><span></span></div>
+  </nav>
+
+  <div class="provider-layout">
+    <aside class="provider-sidebar">
+      <nav class="sidebar-nav">
+        <a href="provider_dashboard.html">📊 Dashboard</a>
+        <a href="provider_appointments.html">📅 Appointments</a>
+        <a href="provider_slots.html">⏰ Manage Slots</a>
+        <a href="provider_profile.html" class="active">✏️ Edit Profile</a>
+        <a href="#" onclick="logout(); return false;" style="margin-top:1rem;color:var(--danger)">🚪 Sign Out</a>
+      </nav>
+    </aside>
+
+    <main class="provider-main">
+      <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:0.3rem">✏️ Edit Your Profile</h1>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem">This is what patients see when they search for you.</p>
+
+      <div class="profile-card">
+        <div class="profile-preview">
+          <div class="preview-avatar" id="previewAvatar">👨‍⚕️</div>
+          <div class="preview-info">
+            <h2 id="previewName">Loading...</h2>
+            <p id="previewSpec">—</p>
+            <p id="previewLocation" style="margin-top:2px">—</p>
+          </div>
+        </div>
+
+        <form id="profileForm">
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="pName" class="form-control" required />
+            </div>
+            <div class="form-group">
+              <label>Specialization</label>
+              <input type="text" id="pSpec" class="form-control" required />
+            </div>
+          </div>
+          <div class="grid-2f">
+            <div class="form-group">
+              <label>Consultation Fee (₹)</label>
+              <input type="number" id="pFee" class="form-control" min="0" required />
+            </div>
+            <div class="form-group">
+              <label>Experience (years)</label>
+              <input type="number" id="pExp" class="form-control" min="0" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Location / Clinic Address</label>
+            <input type="text" id="pLocation" class="form-control" placeholder="e.g. Sector 12, Dwarka, New Delhi" />
+          </div>
+          <div class="form-group">
+            <label>Bio</label>
+            <textarea id="pBio" class="form-control" rows="3" placeholder="Describe your expertise..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="pCategory" class="form-control"></select>
+          </div>
+          <div class="form-group">
+            <label>Avatar Emoji</label>
+            <div class="emoji-grid" id="emojiGrid">
+              <button type="button" class="emoji-btn" data-emoji="👨‍⚕️">👨‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="👩‍⚕️">👩‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍⚕️">🧑‍⚕️</button>
+              <button type="button" class="emoji-btn" data-emoji="👨‍💼">👨‍💼</button>
+              <button type="button" class="emoji-btn" data-emoji="👩‍💼">👩‍💼</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍🏫">🧑‍🏫</button>
+              <button type="button" class="emoji-btn" data-emoji="💆‍♀️">💆‍♀️</button>
+              <button type="button" class="emoji-btn" data-emoji="🧑‍🔬">🧑‍🔬</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save Changes</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!isLoggedIn() || (!isProvider() && !isAdmin())) window.location.href = 'login.html';
+
+    let selectedEmoji = '👨‍⚕️';
+
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedEmoji = btn.dataset.emoji;
+        document.getElementById('previewAvatar').textContent = selectedEmoji;
+      });
+    });
+
+    // Live preview update
+    document.getElementById('pName').addEventListener('input', e => document.getElementById('previewName').textContent = e.target.value || '—');
+    document.getElementById('pSpec').addEventListener('input', e => document.getElementById('previewSpec').textContent = e.target.value || '—');
+    document.getElementById('pLocation').addEventListener('input', e => document.getElementById('previewLocation').textContent = e.target.value || '—');
+
+    async function loadProfile() {
+      try {
+        const cats = await api.get('/categories');
+        const catSel = document.getElementById('pCategory');
+        catSel.innerHTML = cats.map(c => `<option value="${c._id}">${c.icon} ${c.name}</option>`).join('');
+
+        const p = await api.get('/providers/me');
+        document.getElementById('pName').value = p.name;
+        document.getElementById('pSpec').value = p.specialization;
+        document.getElementById('pFee').value = p.fee;
+        document.getElementById('pExp').value = p.experienceYears;
+        document.getElementById('pLocation').value = p.location || '';
+        document.getElementById('pBio').value = p.bio || '';
+        if (p.category?._id) catSel.value = p.category._id;
+        selectedEmoji = p.avatarEmoji || '👨‍⚕️';
+        document.getElementById('previewAvatar').textContent = selectedEmoji;
+        document.getElementById('previewName').textContent = p.name;
+        document.getElementById('previewSpec').textContent = p.specialization;
+        document.getElementById('previewLocation').textContent = p.location || '';
+        // Mark selected emoji btn
+        document.querySelectorAll('.emoji-btn').forEach(b => { b.classList.toggle('selected', b.dataset.emoji === selectedEmoji); });
+      } catch(e) { showToast('Could not load profile.', 'error'); }
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('saveBtn');
+      btn.innerHTML = '⏳ Saving...'; btn.disabled = true;
+      try {
+        await api.put('/providers/me', {
+          name: document.getElementById('pName').value.trim(),
+          specialization: document.getElementById('pSpec').value.trim(),
+          fee: parseInt(document.getElementById('pFee').value),
+          experienceYears: parseInt(document.getElementById('pExp').value),
+          location: document.getElementById('pLocation').value.trim(),
+          bio: document.getElementById('pBio').value.trim(),
+          category: document.getElementById('pCategory').value,
+          avatarEmoji: selectedEmoji
+        });
+        showToast('Profile updated successfully! ✅', 'success');
+      } catch(err) { showToast(err.message || 'Failed to save.', 'error'); }
+      finally { btn.innerHTML = '💾 Save Changes'; btn.disabled = false; }
+    });
+
+    loadProfile();
+  </script>
+</body>
+</html>

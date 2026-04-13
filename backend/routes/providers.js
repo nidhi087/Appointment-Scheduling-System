@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Provider = require('../models/Provider');
 const Category = require('../models/Category');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { requireAuth, requireAdmin, requireProvider } = require('../middleware/auth');
 
 // GET /api/providers  ?category=name&search=text
 router.get('/', async (req, res) => {
@@ -23,6 +23,35 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET /api/providers/me  — provider's own profile
+router.get('/me', requireAuth, requireProvider, async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id }).populate('category', 'name icon');
+    if (!provider) return res.status(404).json({ message: 'Provider profile not found.' });
+    res.json(provider);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/providers/me  — provider edits own profile
+router.put('/me', requireAuth, requireProvider, async (req, res) => {
+  try {
+    const allowed = ['name', 'specialization', 'category', 'fee', 'experienceYears', 'bio', 'avatarEmoji', 'phone', 'location'];
+    const updates = {};
+    allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
+    const provider = await Provider.findOneAndUpdate(
+      { user: req.user._id },
+      updates,
+      { new: true }
+    ).populate('category', 'name icon');
+    if (!provider) return res.status(404).json({ message: 'Provider profile not found.' });
+    res.json(provider);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // GET /api/providers/:id
 router.get('/:id', async (req, res) => {
   try {
@@ -34,7 +63,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/providers (admin)
+// POST /api/providers (admin only)
 router.post('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const provider = await Provider.create(req.body);
@@ -44,7 +73,7 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// PUT /api/providers/:id (admin)
+// PUT /api/providers/:id (admin only)
 router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const provider = await Provider.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -55,7 +84,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/providers/:id (admin)
+// DELETE /api/providers/:id (admin only)
 router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     await Provider.findByIdAndUpdate(req.params.id, { isActive: false });

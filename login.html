@@ -349,10 +349,11 @@
                     Don't have an account? <a href="register.html">Register for free</a>
                 </div>
 
-                <div
-                    style="margin-top:2rem; padding-top:1rem; border-top:1px solid var(--card-border); text-align:center; font-size:0.78rem; color:var(--text-muted)">
-                    👨‍💼 Are you an admin? <a href="admin_dashboard.html" style="color:var(--accent)">Go to Admin
-                        Panel</a>
+                <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid var(--card-border); text-align:center; font-size:0.78rem; color:var(--text-muted)">
+                    👨‍💼 Are you an admin? <a href="admin_dashboard.html" style="color:var(--accent)">Go to Admin Panel</a>
+                </div>
+                <div style="margin-top:0.6rem; text-align:center; font-size:0.78rem; color:var(--text-muted)">
+                    🩺 Are you a provider? <a href="provider_register.html" style="color:var(--highlight); font-weight:600">Join as Provider →</a>
                 </div>
             </div>
         </div>
@@ -363,7 +364,12 @@
     <script src="js/api.js"></script>
     <script>
         // Redirect if already logged in
-        if (isLoggedIn()) window.location.href = isAdmin() ? 'admin_dashboard.html' : 'categories.html';
+        if (isLoggedIn()) {
+            const u = getUser();
+            if (u.role === 'admin')         window.location.href = 'admin_dashboard.html';
+            else if (u.role === 'provider') window.location.href = 'provider_dashboard.html';
+            else                            window.location.href = 'categories.html';
+        }
 
         async function handleLogin(e) {
             e.preventDefault();
@@ -374,10 +380,12 @@
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 const data = await api.post('/auth/login', { email, password });
-                saveAuth(data.token, data.user);
+                saveAuth(data.token, data.user, data.providerId);
                 showToast('Login successful! Redirecting...', 'success');
                 setTimeout(() => {
-                    window.location.href = data.user.role === 'admin' ? 'admin_dashboard.html' : 'categories.html';
+                    if (data.user.role === 'admin')         window.location.href = 'admin_dashboard.html';
+                    else if (data.user.role === 'provider') window.location.href = 'provider_dashboard.html';
+                    else                                    window.location.href = 'categories.html';
                 }, 800);
             } catch (err) {
                 showToast(err.message, 'error');

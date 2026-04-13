@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Appointments — AppointEase Provider</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .provider-layout { display:grid; grid-template-columns:240px 1fr; min-height:calc(100vh - var(--nav-h)); margin-top:var(--nav-h); }
+    .provider-sidebar { background:var(--secondary); border-right:1px solid var(--card-border); padding:2rem 1.2rem; position:sticky; top:var(--nav-h); height:calc(100vh - var(--nav-h)); overflow-y:auto; }
+    .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; color:var(--text-muted); font-size:0.88rem; font-weight:500; text-decoration:none; transition:all var(--transition); margin-bottom:2px; }
+    .sidebar-nav a:hover, .sidebar-nav a.active { background:rgba(124,58,237,0.1); color:var(--accent); font-weight:700;}
+    .provider-main { padding:2.5rem; overflow-y:auto; }
+    .filter-bar { display:flex; gap:10px; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .filter-btn { padding:7px 18px; border-radius:50px; border:1.5px solid var(--card-border); background:var(--card-bg); color:var(--text-muted); font-size:0.82rem; cursor:pointer; font-family:inherit; transition:all var(--transition); }
+    .filter-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .appt-card { background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius); padding:1.25rem 1.5rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+    .appt-left { display:flex; align-items:center; gap:1.2rem; }
+    .appt-avatar { width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--highlight)); display:flex;align-items:center;justify-content:center;font-size:1.2rem;color:#fff;font-weight:700;flex-shrink:0; }
+    .appt-patient-name { font-weight:700; font-size:0.95rem; }
+    .appt-detail { font-size:0.8rem; color:var(--text-muted); margin-top:3px; }
+    @media(max-width:800px){.provider-layout{grid-template-columns:1fr;}.provider-sidebar{display:none;}}
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><div class="brand-icon">📅</div>Appoint<span>Ease</span></a>
+    <ul class="nav-links">
+      <li><a href="provider_dashboard.html">Dashboard</a></li>
+      <li><a href="provider_appointments.html" class="active">Appointments</a></li>
+      <li><a href="provider_slots.html">Slots</a></li>
+      <li><a href="provider_profile.html">Profile</a></li>
+    </ul>
+    <div class="nav-actions"></div>
+    <div class="hamburger"><span></span><span></span><span></span></div>
+  </nav>
+
+  <div class="provider-layout">
+    <aside class="provider-sidebar">
+      <nav class="sidebar-nav">
+        <a href="provider_dashboard.html">📊 Dashboard</a>
+        <a href="provider_appointments.html" class="active">📅 Appointments</a>
+        <a href="provider_slots.html">⏰ Manage Slots</a>
+        <a href="provider_profile.html">✏️ Edit Profile</a>
+        <a href="#" onclick="logout(); return false;" style="margin-top:1rem;color:var(--danger)">🚪 Sign Out</a>
+      </nav>
+    </aside>
+
+    <main class="provider-main">
+      <h1 style="font-size:1.5rem;font-weight:800;margin-bottom:0.3rem">📅 All Appointments</h1>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem">All bookings made by patients for your profile.</p>
+
+      <div class="filter-bar">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="confirmed">Confirmed</button>
+        <button class="filter-btn" data-filter="cancelled">Cancelled</button>
+      </div>
+
+      <div id="appointmentsList"><p style="color:var(--text-muted)">Loading appointments...</p></div>
+    </main>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    if (!isLoggedIn() || (!isProvider() && !isAdmin())) window.location.href = 'login.html';
+
+    let allAppointments = [];
+    let currentFilter = 'all';
+
+    async function loadAppointments() {
+      try {
+        allAppointments = await api.get('/appointments/provider');
+        renderList();
+      } catch(e) {
+        document.getElementById('appointmentsList').innerHTML = '<p style="color:var(--danger)">❌ Could not load appointments. Is the server running?</p>';
+      }
+    }
+
+    function renderList() {
+      const list = currentFilter === 'all' ? allAppointments : allAppointments.filter(a => a.status === currentFilter);
+      const el = document.getElementById('appointmentsList');
+      if (!list.length) { el.innerHTML = '<p style="color:var(--text-muted)">No appointments found.</p>'; return; }
+      el.innerHTML = list.map(a => {
+        const initials = (a.user?.name || 'P').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+        const badgeClass = a.status === 'confirmed' ? 'badge-success' : a.status === 'cancelled' ? 'badge-danger' : 'badge-warning';
+        return `
+          <div class="appt-card">
+            <div class="appt-left">
+              <div class="appt-avatar">${initials}</div>
+              <div>
+                <div class="appt-patient-name">${a.user?.name || 'Patient'}</div>
+                <div class="appt-detail">${a.user?.email || ''}</div>
+                <div class="appt-detail" style="margin-top:4px">📅 ${a.date} &nbsp;⏰ ${a.time} &nbsp;📍 ${a.mode}</div>
+                ${a.notes ? `<div class="appt-detail" style="margin-top:3px;font-style:italic">"${a.notes}"</div>` : ''}
+              </div>
+            </div>
+            <span class="badge ${badgeClass}">${a.status}</span>
+          </div>`;
+      }).join('');
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        renderList();
+      });
+    });
+
+    loadAppointments();
+  </script>
+</body>
+</html>

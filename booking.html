@@ -230,13 +230,63 @@
             resize: vertical;
         }
 
+        /* Sticky bottom confirm bar */
+        .sticky-confirm-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255,255,255,0.97);
+            border-top: 1px solid var(--card-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 14px 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            z-index: 900;
+            box-shadow: 0 -4px 24px rgba(124, 58, 237, 0.10);
+        }
+
+        .sticky-confirm-bar .bar-info {
+            font-size: 0.85rem;
+        }
+
+        .sticky-confirm-bar .bar-info .bar-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .sticky-confirm-bar .bar-info .bar-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .sticky-confirm-bar .bar-status {
+            font-size: 0.78rem;
+            font-weight: 500;
+            color: var(--warning);
+            flex: 1;
+            text-align: center;
+        }
+
+        /* Push page content up so sticky bar doesn't cover the bottom */
+        body { padding-bottom: 80px; }
+
         @media (max-width: 900px) {
             .booking-layout {
                 grid-template-columns: 1fr;
             }
 
+            /* On mobile, show summary card after slots but use order to push it up */
             .summary-card {
                 position: static;
+                order: -1;  /* show summary FIRST on mobile so it's visible */
+            }
+
+            .booking-layout > div:first-child {
+                order: 1;
             }
         }
     </style>
@@ -364,7 +414,7 @@
 
             <div class="form-group">
                 <label>Consultation Type</label>
-                <select class="form-control">
+                <select id="consultationType" class="form-control">
                     <option>In-Clinic</option>
                     <option>Online Video Call</option>
                     <option>Home Visit</option>
@@ -372,13 +422,33 @@
             </div>
 
             <button class="btn btn-primary btn-block btn-lg" id="confirmBtn" onclick="confirmBooking()"
-                style="margin-top:0.5rem">
-                Confirm Booking
+                style="margin-top:0.5rem" disabled>
+                ✅ Confirm Booking
             </button>
-            <p style="text-align:center; font-size:0.75rem; color:var(--text-muted); margin-top:10px">
+            <p id="bookingStatus" style="text-align:center; font-size:0.75rem; color:var(--warning); margin-top:10px; font-weight:500">
+                ⬅️ Select a date to continue
+            </p>
+            <p style="text-align:center; font-size:0.72rem; color:var(--text-muted); margin-top:4px">
                 🔒 Free cancellation up to 2 hours before
             </p>
         </div>
+    </div>
+
+    <!-- STICKY CONFIRM BAR (always visible at bottom) -->
+    <div class="sticky-confirm-bar" id="stickyBar">
+        <div class="bar-info">
+            <div class="bar-label">Provider</div>
+            <div class="bar-value" id="barProvider">Not selected</div>
+        </div>
+        <div class="bar-info">
+            <div class="bar-label">Date &amp; Time</div>
+            <div class="bar-value" id="barDateTime">—</div>
+        </div>
+        <span class="bar-status" id="barStatus">📅 Select a date to continue</span>
+        <button class="btn btn-primary" id="stickyConfirmBtn" onclick="confirmBooking()" disabled
+            style="white-space:nowrap; padding:12px 28px; opacity:0.55; cursor:not-allowed">
+            ✅ Confirm Booking
+        </button>
     </div>
 
     <!-- Booking Confirmation Modal -->
@@ -394,10 +464,11 @@
                 <p style="color:var(--text-muted); margin-bottom:1.5rem">Your appointment has been confirmed.</p>
                 <div
                     style="background:var(--input-bg); border-radius:var(--radius-sm); padding:1rem; text-align:left; font-size:0.85rem; line-height:2">
+                    <div>👤 <strong>Provider:</strong> <span id="modalProvider">—</span></div>
                     <div>📅 <strong>Date:</strong> <span id="modalDate">—</span></div>
                     <div>⏰ <strong>Time:</strong> <span id="modalTime">—</span></div>
-                    <div>📍 <strong>Mode:</strong> In-Clinic</div>
-                    <div>💰 <strong>Fee:</strong> —</div>
+                    <div>📍 <strong>Mode:</strong> <span id="modalMode">In-Clinic</span></div>
+                    <div>💰 <strong>Fee:</strong> <span id="modalFee">—</span></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -424,14 +495,69 @@
         let selectedDate = null;
         let selectedDateISO = null;
         let selectedSlotId = null;
+        let selectedTime = null;
         let providerData = null;
+
+        const confirmBtn = document.getElementById('confirmBtn');
+        const bookingStatus = document.getElementById('bookingStatus');
+        const stickyBtn = document.getElementById('stickyConfirmBtn');
+        const barStatus = document.getElementById('barStatus');
+        const barDateTime = document.getElementById('barDateTime');
+        const barProvider = document.getElementById('barProvider');
+
+        // Helper: enable or disable a button with styling
+        function setBtn(btn, enabled) {
+            btn.disabled = !enabled;
+            btn.style.opacity = enabled ? '1' : '0.55';
+            btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+        }
+
+        // Update both the in-card button AND the sticky bar
+        function updateConfirmButton() {
+            let statusMsg, statusColor, ready = false;
+
+            if (!providerId) {
+                statusMsg = '⬅️ Go back and choose a provider first';
+                statusColor = 'var(--danger)';
+            } else if (!selectedDateISO) {
+                statusMsg = '📅 Select a date to continue';
+                statusColor = 'var(--warning)';
+            } else if (!selectedSlotId) {
+                statusMsg = '⏰ Now pick an available time slot';
+                statusColor = 'var(--warning)';
+            } else {
+                statusMsg = '✅ All set! Click Confirm Booking';
+                statusColor = 'var(--success)';
+                ready = true;
+            }
+
+            // Sync in-card button
+            setBtn(confirmBtn, ready);
+            bookingStatus.textContent = statusMsg;
+            bookingStatus.style.color = statusColor;
+
+            // Sync sticky bar
+            setBtn(stickyBtn, ready);
+            barStatus.textContent = statusMsg;
+            barStatus.style.color = statusColor;
+            barDateTime.textContent = selectedDate && selectedTime
+                ? `${selectedDate} · ${selectedTime}`
+                : (selectedDate ? selectedDate : '—');
+        }
 
         // Load provider info
         async function loadProvider() {
-            if (!providerId) return;
+            if (!providerId) {
+                document.querySelector('.provider-info-name').textContent = 'No Provider Selected';
+                document.querySelector('.provider-info-spec').textContent = 'Go back to Providers and click "Book Now"';
+                document.querySelector('.provider-info-meta').style.display = 'none';
+                document.querySelector('.provider-info-avatar').textContent = '⚠️';
+                updateConfirmButton();
+                return;
+            }
             try {
                 providerData = await api.get('/providers/' + providerId);
-                document.querySelector('.provider-info-avatar').textContent = providerData.avatarEmoji;
+                document.querySelector('.provider-info-avatar').textContent = providerData.avatarEmoji || '👤';
                 document.querySelector('.provider-info-name').textContent = providerData.name;
                 document.querySelector('.provider-info-spec').textContent = providerData.specialization;
                 document.querySelector('.provider-info-meta').textContent =
@@ -439,7 +565,11 @@
                 document.getElementById('summaryProvider').textContent = providerData.name;
                 document.getElementById('summarySpec').textContent = providerData.specialization;
                 document.querySelector('.summary-total .value').textContent = `₹${providerData.fee}`;
-            } catch(e) { /* keep defaults */ }
+                barProvider.textContent = providerData.name;
+            } catch(e) {
+                document.querySelector('.provider-info-name').textContent = 'Provider not found';
+            }
+            updateConfirmButton();
         }
 
         // Build date strip (next 14 days)
@@ -457,8 +587,10 @@
                 selectedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
                 document.getElementById('summaryDate').textContent = selectedDate;
                 selectedSlotId = null;
+                selectedTime = null;
                 document.getElementById('summaryTime').textContent = 'Not selected';
                 loadSlots(selectedDateISO);
+                updateConfirmButton();
             });
             strip.appendChild(chip);
         }
@@ -466,22 +598,32 @@
         // Load real slots from backend
         async function loadSlots(dateISO) {
             ['morningSlots','afternoonSlots','eveningSlots'].forEach(id => {
-                document.getElementById(id).innerHTML = '';
+                document.getElementById(id).innerHTML = '<p style="color:var(--text-muted);font-size:0.83rem">Loading...</p>';
             });
+            document.getElementById('afternoonSlots').innerHTML = '';
+            document.getElementById('eveningSlots').innerHTML = '';
+
             if (!providerId) {
                 document.getElementById('morningSlots').innerHTML = '<p style="color:var(--text-muted);font-size:0.83rem">Please select a provider first.</p>';
                 return;
             }
             try {
                 const slots = await api.get(`/slots?provider_id=${providerId}&date=${dateISO}`);
+                ['morningSlots','afternoonSlots','eveningSlots'].forEach(id => {
+                    document.getElementById(id).innerHTML = '';
+                });
                 if (!slots.length) {
                     document.getElementById('morningSlots').innerHTML = '<p style="color:var(--text-muted);font-size:0.83rem">No slots available for this date.</p>';
                     return;
                 }
                 slots.forEach(slot => {
-                    const hour = parseInt(slot.time.split(':')[0]);
-                    const isPM = slot.time.includes('PM');
-                    const hour24 = isPM && hour !== 12 ? hour + 12 : (!isPM && hour === 12 ? 0 : hour);
+                    const timeParts = slot.time.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                    let hour24 = 0;
+                    if (timeParts) {
+                        let h = parseInt(timeParts[1]);
+                        const isPM = timeParts[3].toUpperCase() === 'PM';
+                        hour24 = isPM && h !== 12 ? h + 12 : (!isPM && h === 12 ? 0 : h);
+                    }
                     const containerId = hour24 < 12 ? 'morningSlots' : (hour24 < 17 ? 'afternoonSlots' : 'eveningSlots');
                     const container = document.getElementById(containerId);
                     const btn = document.createElement('button');
@@ -496,48 +638,63 @@
                             document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             selectedSlotId = slot._id;
+                            selectedTime = slot.time;
                             document.getElementById('summaryTime').textContent = slot.time;
+                            updateConfirmButton();
                         });
                     }
                     container.appendChild(btn);
                 });
             } catch(e) {
-                document.getElementById('morningSlots').innerHTML = '<p style="color:var(--danger);font-size:0.83rem">Could not load slots. Is the server running?</p>';
+                document.getElementById('morningSlots').innerHTML = '<p style="color:var(--danger);font-size:0.83rem">❌ Could not load slots. Is the server running?</p>';
             }
         }
 
         async function confirmBooking() {
             if (!isLoggedIn()) { window.location.href = 'login.html'; return; }
-            const date = document.getElementById('summaryDate').textContent;
-            const time = document.getElementById('summaryTime').textContent;
-            if (date === 'Not selected') { showToast('Please select a date!', 'error'); return; }
-            if (time === 'Not selected') { showToast('Please select a time slot!', 'error'); return; }
-            if (!providerId || !selectedSlotId) { showToast('Missing provider or slot info.', 'error'); return; }
-            const mode = document.querySelector('.summary-card select').value;
+            if (!selectedDateISO) { showToast('Please select a date!', 'error'); return; }
+            if (!selectedSlotId || !selectedTime) { showToast('Please select a time slot!', 'error'); return; }
+            if (!providerId) { showToast('No provider selected. Please go back and choose a provider.', 'error'); return; }
+
+            const mode = document.getElementById('consultationType').value;
             const notes = document.getElementById('bookingNotes').value.trim();
-            const btn = document.getElementById('confirmBtn');
-            btn.innerHTML = '<span class="spinner"></span> Confirming...';
-            btn.disabled = true;
+
+            confirmBtn.innerHTML = '⏳ Confirming...';
+            confirmBtn.disabled = true;
+
             try {
                 await api.post('/appointments', {
                     provider: providerId,
                     slot: selectedSlotId,
                     date: selectedDateISO,
-                    time,
+                    time: selectedTime,
                     mode,
                     notes
                 });
-                document.getElementById('modalDate').textContent = date;
-                document.getElementById('modalTime').textContent = time;
+
+                // Populate success modal
+                document.getElementById('modalDate').textContent = selectedDate;
+                document.getElementById('modalTime').textContent = selectedTime;
+                document.getElementById('modalFee').textContent = providerData ? `₹${providerData.fee}` : '—';
+                document.getElementById('modalProvider').textContent = providerData ? providerData.name : '—';
+                document.getElementById('modalMode').textContent = mode;
+
                 openModal('confirmModal');
                 showToast('Appointment booked successfully! 🎉', 'success');
+
+                // Reset button state after booking
+                confirmBtn.innerHTML = '✅ Confirm Booking';
+                bookingStatus.textContent = '🎉 Booking confirmed! Check My Bookings.';
+                bookingStatus.style.color = 'var(--success)';
             } catch(e) {
-                showToast(e.message, 'error');
-                btn.innerHTML = 'Confirm Booking';
-                btn.disabled = false;
+                showToast(e.message || 'Booking failed. Please try again.', 'error');
+                confirmBtn.innerHTML = '✅ Confirm Booking';
+                confirmBtn.disabled = false;
+                updateConfirmButton();
             }
         }
 
+        updateConfirmButton();
         loadProvider();
     </script>
 </body>

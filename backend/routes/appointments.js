@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const Appointment = require('../models/Appointment');
 const Slot = require('../models/Slot');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const Provider = require('../models/Provider');
+const { requireAuth, requireAdmin, requireProvider } = require('../middleware/auth');
 
-// GET /api/appointments — current user's appointments
+// GET /api/appointments — current user's own appointments
 router.get('/', requireAuth, async (req, res) => {
   try {
     const appointments = await Appointment.find({ user: req.user._id })
@@ -16,14 +17,27 @@ router.get('/', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/appointments — book an appointment
+// GET /api/appointments/provider — all appointments for the logged-in provider
+router.get('/provider', requireAuth, requireProvider, async (req, res) => {
+  try {
+    const myProvider = await Provider.findOne({ user: req.user._id });
+    if (!myProvider) return res.status(404).json({ message: 'Provider profile not found.' });
+    const appointments = await Appointment.find({ provider: myProvider._id })
+      .populate('user', 'name email')
+      .sort({ date: 1, time: 1 });
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/appointments — book an appointment (patient)
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { provider, slot, date, time, mode, notes } = req.body;
     if (!provider || !slot || !date || !time)
       return res.status(400).json({ message: 'provider, slot, date and time are required.' });
 
-    // Mark slot as booked
     const slotDoc = await Slot.findById(slot);
     if (!slotDoc) return res.status(404).json({ message: 'Slot not found.' });
     if (slotDoc.isBooked) return res.status(400).json({ message: 'This slot is already booked.' });
@@ -54,10 +68,7 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
 
     appointment.status = 'cancelled';
     await appointment.save();
-
-    // Free the slot
     await Slot.findByIdAndUpdate(appointment.slot, { isBooked: false });
-
     res.json({ message: 'Appointment cancelled.', appointment });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -66,7 +77,7 @@ router.patch('/:id/cancel', requireAuth, async (req, res) => {
 
 // ===== ADMIN ROUTES =====
 
-// GET /api/admin/appointments — all appointments (admin)
+// GET /api/appointments/admin/all — all appointments (admin)
 router.get('/admin/all', requireAuth, requireAdmin, async (req, res) => {
   try {
     const filter = {};
@@ -81,7 +92,7 @@ router.get('/admin/all', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// PATCH /api/admin/appointments/:id/status (admin)
+// PATCH /api/appointments/admin/:id/status (admin)
 router.patch('/admin/:id/status', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { status } = req.body;

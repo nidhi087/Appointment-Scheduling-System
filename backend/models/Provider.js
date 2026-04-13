@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const providerSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true, sparse: true },
   name: { type: String, required: true, trim: true },
   specialization: { type: String, required: true, trim: true },
   category: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
@@ -9,6 +10,8 @@ const providerSchema = new mongoose.Schema({
   fee: { type: Number, default: 500 },
   bio: { type: String, default: '' },
   avatarEmoji: { type: String, default: '👨‍💼' },
+  phone: { type: String, default: '' },
+  location: { type: String, default: '' },
   isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 

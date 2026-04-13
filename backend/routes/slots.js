@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const Slot = require('../models/Slot');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const Provider = require('../models/Provider');
+const { requireAuth, requireAdmin, requireProvider } = require('../middleware/auth');
 
-// GET /api/slots?provider_id=X&date=YYYY-MM-DD
+// GET /api/slots?provider_id=X&date=YYYY-MM-DD  (public)
 router.get('/', async (req, res) => {
   try {
     const filter = {};
@@ -16,12 +17,19 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/slots (admin) — create one or many slots
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
+// POST /api/slots — provider creates their own slots (or admin creates any)
+router.post('/', requireAuth, requireProvider, async (req, res) => {
   try {
     const { provider, date, times } = req.body;
     if (!provider || !date || !times || !times.length)
       return res.status(400).json({ message: 'provider, date and times[] are required.' });
+
+    // Providers can only create slots for themselves
+    if (req.user.role === 'provider') {
+      const myProvider = await Provider.findOne({ user: req.user._id });
+      if (!myProvider || myProvider._id.toString() !== provider)
+        return res.status(403).json({ message: 'You can only create slots for your own profile.' });
+    }
 
     const slots = await Slot.insertMany(times.map((time) => ({ provider, date, time })));
     res.status(201).json(slots);
@@ -30,12 +38,20 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/slots/:id (admin)
-router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
+// DELETE /api/slots/:id — provider deletes their own slot (or admin deletes any)
+router.delete('/:id', requireAuth, requireProvider, async (req, res) => {
   try {
     const slot = await Slot.findById(req.params.id);
     if (!slot) return res.status(404).json({ message: 'Slot not found.' });
     if (slot.isBooked) return res.status(400).json({ message: 'Cannot delete a booked slot.' });
+
+    // Providers can only delete their own slots
+    if (req.user.role === 'provider') {
+      const myProvider = await Provider.findOne({ user: req.user._id });
+      if (!myProvider || myProvider._id.toString() !== slot.provider.toString())
+        return res.status(403).json({ message: 'You can only delete your own slots.' });
+    }
+
     await Slot.findByIdAndDelete(req.params.id);
     res.json({ message: 'Slot deleted.' });
   } catch (err) {

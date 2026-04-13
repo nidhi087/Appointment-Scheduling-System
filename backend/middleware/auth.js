@@ -22,4 +22,9 @@ const requireAdmin = (req, res, next) => {
   return res.status(403).json({ message: 'Admin access required.' });
 };
 
-module.exports = { requireAuth, requireAdmin };
+const requireProvider = (req, res, next) => {
+  if (req.user && (req.user.role === 'provider' || req.user.role === 'admin')) return next();
+  return res.status(403).json({ message: 'Provider access required.' });
+};
+
+module.exports = { requireAuth, requireAdmin, requireProvider };
